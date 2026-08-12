@@ -95,10 +95,14 @@
     document.getElementById('ccontainer').style.width = dim.w + 'px';
     document.getElementById('ccontainer').style.height = dim.h + 'px';
     applyZoom();
+    if (typeof addTshirtGuide === 'function') {
+      FC.getObjects().filter((o) => o.isGuide).forEach((o) => FC.remove(o));
+      addTshirtGuide();
+    }
     FC.renderAll();
     drawGrid();
     updateStats();
-    showToast('Canvas → ' + w + '×' + h + ' ' + unitLabel(), 's');
+    if (!S._skipSizeToast) showToast('Canvas → ' + w + '×' + h + ' ' + unitLabel(), 's');
   };
 
   window.autoNest = function autoNest() {
@@ -159,10 +163,15 @@
     const oc = document.createElement('canvas');
     oc.width = w; oc.height = h;
     const ctx = oc.getContext('2d');
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, w, h);
+    ctx.clearRect(0, 0, w, h);
     ctx.drawImage(imgEl, 0, 0, w, h);
     const imgd = ctx.getImageData(0, 0, w, h);
+    // Trace the alpha silhouette — never invent a white page behind a logo.
+    for (let i = 0; i < imgd.data.length; i += 4) {
+      const on = imgd.data[i + 3] >= 16;
+      imgd.data[i] = imgd.data[i + 1] = imgd.data[i + 2] = on ? 0 : 255;
+      imgd.data[i + 3] = 255;
+    }
     if (typeof ImageTracer === 'undefined') throw new Error('ImageTracer not loaded');
     return ImageTracer.imagedataToSVG(imgd, E.traceOptions(threshold, smooth));
   }
@@ -249,8 +258,9 @@
     });
   }
 
-  window.outlineTextForCut = async function outlineTextForCut() {
-    const texts = FC.getObjects().filter((o) => !o.isGuide && (o.type === 'text' || o.type === 'i-text' || o.objType === 'emoji'));
+  window.outlineTextForCut = async function outlineTextForCut(opts) {
+    const o = opts || {};
+    const texts = FC.getObjects().filter((obj) => !obj.isGuide && (obj.type === 'text' || obj.type === 'i-text' || obj.objType === 'emoji'));
     if (!texts.length) return 0;
     if (typeof ImageTracer === 'undefined') {
       showToast('Tracer unavailable — text left as live type', 'w');
@@ -265,47 +275,76 @@
     }
     FC.discardActiveObject();
     FC.renderAll();
-    saveH();
+    if (!o.skipSave) saveH();
     return texts.length;
   };
+
+  function snapshotCanvas() {
+    return FC.toJSON(['objType', 'isGuide', 'cutCommands', 'bgRemoved']);
+  }
+
+  function restoreCanvas(snap) {
+    return new Promise((resolve) => {
+      histBusy = true;
+      FC.loadFromJSON(snap, () => {
+        histBusy = false;
+        FC.renderAll();
+        updateLayers();
+        updateStats();
+        resolve();
+      });
+    });
+  }
+
+  async function withTemporaryOutlines(fn) {
+    const snap = snapshotCanvas();
+    try {
+      await outlineTextForCut({ skipSave: true });
+      return await fn();
+    } finally {
+      await restoreCanvas(snap);
+    }
+  }
 
   const prevDoExport = window.doExport;
   window.doExport = async function doExport() {
     const fmt = document.getElementById('exp-fmt').value;
     const outline = document.getElementById('exp-outline');
-    if ((fmt === 'cut-svg' || fmt === 'dxf' || fmt === 'hpgl') && outline && outline.checked) {
-      showToast('Converting text to cut outlines…', 's');
-      await outlineTextForCut();
+    const needOutline = (fmt === 'cut-svg' || fmt === 'dxf' || fmt === 'hpgl') && outline && outline.checked;
+    const run = async function () {
+      if (fmt === 'hpgl') {
+        dlBlob(new Blob([genHPGL()], { type: 'application/vnd.hp-hpgl' }), 'aisac-cut-plotter.plt');
+        showToast('Exported HPGL / PLT', 's');
+        return;
+      }
+      if (fmt === 'dxf') {
+        dlBlob(new Blob([genDXF()], { type: 'application/dxf' }), 'aisac-cut-plotter.dxf');
+        showToast('Exported DXF (mm, Y-up)', 's');
+        return;
+      }
+      if (fmt === 'cut-svg') {
+        let svg = FC.toSVG({
+          width: E.toMm(S.docW, S.unit) + 'mm',
+          height: E.toMm(S.docH, S.unit) + 'mm',
+          viewBox: { x: 0, y: 0, width: FC.width, height: FC.height },
+        });
+        svg = E.stripFillsForCut(svg);
+        const addScale = document.getElementById('exp-scale').checked;
+        svg = svg.replace('</svg>', buildSVGWatermark(FC.width, FC.height, addScale, S.docW, S.docH) + '</svg>');
+        svg = '<!-- aisac CutterStudio Pro · ' + E.toMm(S.docW, S.unit) + 'mm × ' + E.toMm(S.docH, S.unit) + 'mm · ' + new Date().toISOString() + ' -->\n' + svg;
+        dlBlob(new Blob([svg], { type: 'image/svg+xml' }), 'aisac-cut-plotter.svg');
+        showToast('Exported Cut-SVG', 's');
+        return;
+      }
+      prevDoExport();
+    };
+    closeModal('exp-modal');
+    if (needOutline) {
+      showToast('Outlining text for cut (canvas restored after)…', 's');
+      await withTemporaryOutlines(run);
+    } else {
+      await run();
     }
-    if (fmt === 'hpgl') {
-      const plt = genHPGL();
-      dlBlob(new Blob([plt], { type: 'application/vnd.hp-hpgl' }), 'aisac-cut-plotter.plt');
-      closeModal('exp-modal');
-      showToast('Exported HPGL / PLT', 's');
-      return;
-    }
-    if (fmt === 'dxf') {
-      dlBlob(new Blob([genDXF()], { type: 'application/dxf' }), 'aisac-cut-plotter.dxf');
-      closeModal('exp-modal');
-      showToast('Exported DXF (mm, Y-up)', 's');
-      return;
-    }
-    if (fmt === 'cut-svg') {
-      let svg = FC.toSVG({
-        width: E.toMm(S.docW, S.unit) + 'mm',
-        height: E.toMm(S.docH, S.unit) + 'mm',
-        viewBox: { x: 0, y: 0, width: FC.width, height: FC.height },
-      });
-      svg = E.stripFillsForCut(svg);
-      const addScale = document.getElementById('exp-scale').checked;
-      svg = svg.replace('</svg>', buildSVGWatermark(FC.width, FC.height, addScale, S.docW, S.docH) + '</svg>');
-      svg = '<!-- aisac CutterStudio Pro · ' + E.toMm(S.docW, S.unit) + 'mm × ' + E.toMm(S.docH, S.unit) + 'mm · ' + new Date().toISOString() + ' -->\n' + svg;
-      dlBlob(new Blob([svg], { type: 'image/svg+xml' }), 'aisac-cut-plotter.svg');
-      closeModal('exp-modal');
-      showToast('Exported Cut-SVG', 's');
-      return;
-    }
-    prevDoExport();
   };
 
   const prevPayload = window.projectPayload;

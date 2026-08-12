@@ -247,6 +247,23 @@
     return loops;
   }
 
+  function localShapePoints(obj) {
+    const w = obj.width || 0, h = obj.height || 0;
+    if (!w || !h) return null;
+    if (obj.type === 'rect' || obj.type === 'image') {
+      return [
+        { x: -w / 2, y: -h / 2 }, { x: w / 2, y: -h / 2 },
+        { x: w / 2, y: h / 2 }, { x: -w / 2, y: h / 2 },
+      ];
+    }
+    if (obj.type === 'triangle') {
+      return [
+        { x: -w / 2, y: h / 2 }, { x: 0, y: -h / 2 }, { x: w / 2, y: h / 2 },
+      ];
+    }
+    return null;
+  }
+
   function fabricObjectToEntities(obj, opts) {
     const o = opts || {};
     const pxPerMmLocal = o.pxPerMm || PX_PER_MM;
@@ -283,6 +300,12 @@
       const a = transformPoint(obj.x1, obj.y1, m);
       const b = transformPoint(obj.x2, obj.y2, m);
       return [{ type: 'polyline', closed: false, points: [{ x: toMmX(a.x), y: toMmY(a.y) }, { x: toMmX(b.x), y: toMmY(b.y) }] }];
+    }
+    const local = localShapePoints(obj);
+    if (local && local.length) {
+      const m = obj.calcTransformMatrix ? obj.calcTransformMatrix() : [1, 0, 0, 1, 0, 0];
+      const pts = local.map((p) => transformPoint(p.x, p.y, m));
+      return [{ type: 'polyline', closed: true, points: mapPts(pts) }];
     }
     if (obj.getBoundingRect) {
       const b = obj.getBoundingRect(true, true);

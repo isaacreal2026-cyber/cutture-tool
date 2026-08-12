@@ -57,6 +57,22 @@ const fakeCircle = {
 const ents = E.fabricObjectToEntities(fakeCircle, { pxPerMm: E.PX_PER_MM, heightPx: 400 });
 check('fabric circle → mm entity ~1cm radius', ents[0].type === 'circle' && Math.abs(ents[0].r - 10) < 0.02, JSON.stringify(ents[0]));
 
+const tri = {
+  type: 'triangle', width: 100, height: 100, isGuide: false,
+  calcTransformMatrix: () => [1, 0, 0, 1, 50, 50],
+};
+const triEnt = E.fabricObjectToEntities(tri, { pxPerMm: 1, heightPx: 200, simplifyMm: 0 });
+check('triangle cuts 3 vertices not a box', triEnt[0] && triEnt[0].points.length === 3, JSON.stringify(triEnt[0] && triEnt[0].points));
+
+const ang = Math.PI / 4;
+const rot = {
+  type: 'rect', width: 40, height: 20, isGuide: false,
+  calcTransformMatrix: () => [Math.cos(ang), Math.sin(ang), -Math.sin(ang), Math.cos(ang), 80, 80],
+};
+const rotEnt = E.fabricObjectToEntities(rot, { pxPerMm: 1, heightPx: 200, simplifyMm: 0 });
+const ys = (rotEnt[0].points || []).map((p) => +p.y.toFixed(3));
+check('rotated rect is not axis-aligned', new Set(ys).size > 2, JSON.stringify(ys));
+
 const svg = E.stripFillsForCut('<svg><path fill="#ff00aa" stroke="red"/></svg>');
 check('cut SVG strips fills', svg.includes('fill="none"') && svg.includes('stroke="#000000"'));
 
