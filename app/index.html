@@ -9,10 +9,11 @@
 <script src="vendor/imagetracer.js"></script>
 <script src="js/engine.js"></script>
 <script src="js/image-prep.js"></script>
+<script src="js/fonts.js"></script>
 <!-- Optional online fonts. Non-blocking so a missing network never freezes the Windows app. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@700&family=Archivo+Black&family=League+Gothic&family=Pacifico&family=Lobster&family=Amatic+SC:wght@700&family=Shrikhand&family=Dancing+Script:wght@700&family=Allura&family=Quicksand:wght@700&family=Orbitron:wght@700&family=Audiowide&family=Exo+2:wght@700;900&family=Space+Grotesk:wght@700&family=Permanent+Marker&family=Gloria+Hallelujah&family=Shadows+Into+Light&family=Yellowtail&family=Playfair+Display:wght@700&family=Abril+Fatface&family=Cormorant:wght@700&family=Bebas+Neue&family=Montserrat:wght@900&family=Righteous&family=Bangers&family=Rajdhani:wght@700&family=Roboto+Condensed:wght@700&family=Ubuntu:wght@700&family=Comfortaa:wght@700&family=Cinzel:wght@700&family=Philosopher:wght@700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@700&family=Archivo+Black&family=League+Gothic&family=Pacifico&family=Lobster&family=Shrikhand&family=Orbitron:wght@700&family=Audiowide&family=Space+Grotesk:wght@700&family=Permanent+Marker&family=Yellowtail&family=Bebas+Neue&family=Montserrat:wght@900&family=Righteous&family=Bangers&family=Rajdhani:wght@700&family=Roboto+Condensed:wght@700&family=Tourney:wght@700;900&family=Black+Ops+One&family=Russo+One&family=Squada+One&family=Teko:wght@700&family=Barlow+Condensed:wght@700&family=Staatliches&family=Titan+One&family=Changa+One&family=Alfa+Slab+One&family=Bungee&family=Luckiest+Guy&family=Fredoka:wght@700&family=Graduate&family=Share+Tech+Mono&family=Iceland&family=Chakra+Petch:wght@700&family=Wallpoet&family=VT323&family=Michroma&family=Oxanium:wght@700&family=Outfit:wght@700;800&family=League+Spartan:wght@700&family=Kaushan+Script&family=Paytone+One&family=Lilita+One&family=Aldrich&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <noscript><link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet"></noscript>
 <style>
 /* ===== TOKENS ===== */
@@ -225,11 +226,12 @@ select.pi{cursor:pointer}
 .fpitem .fn{font-size:16px;line-height:1.15}
 .fpitem .fm{font-size:9px;color:var(--t3);margin-top:1px}
 
-/* font category colors */
-.cat-bold .fpcath{color:#b09cff}.cat-street .fpcath{color:#ff8fa3}
-.cat-rasta .fpcath{color:#4ade80}.cat-girly .fpcath{color:#f9a8d4}
-.cat-classic .fpcath{color:#fbbf24}.cat-tech .fpcath{color:#38bdf8}
-.cat-brush .fpcath{color:#fb923c}.cat-trendy .fpcath{color:#e879f9}
+/* font category colors — shop lanes, not lifestyle fluff */
+.cat-jersey .fpcath{color:#b09cff}.cat-block .fpcath{color:#f87171}
+.cat-condensed .fpcath{color:#fb923c}.cat-digital .fpcath{color:#38bdf8}
+.cat-school .fpcath{color:#4ade80}.cat-street .fpcath{color:#ff8fa3}
+.cat-corporate .fpcath{color:#fbbf24}.cat-script .fpcath{color:#f9a8d4}
+.cat-bold .fpcath{color:#b09cff}.cat-tech .fpcath{color:#38bdf8}
 
 /* BUTTONS */
 .btn{padding:6px 12px;border-radius:var(--rs);font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:5px;transition:all .15s;border:1px solid transparent}
@@ -424,7 +426,7 @@ select.pi{cursor:pointer}
               <div class="fpbar" id="fpbar" onclick="toggleFP()">
                 <div>
                   <div class="fpname" id="fpname" style="font-family:'Bebas Neue',Impact,sans-serif">Bebas Neue</div>
-                  <div class="fpsub" id="fpsub">💥 Bold / Powerful</div>
+                  <div class="fpsub" id="fpsub">⚽ Jersey / Kit</div>
                 </div>
                 <span class="fparrow" id="fparr">▾</span>
               </div>
@@ -756,6 +758,14 @@ select.pi{cursor:pointer}
         <input type="color" class="pi" id="kit-num-col" value="#111111" style="padding:2px;height:28px">
       </div>
       <div class="prow">
+        <span class="plbl">Name font</span>
+        <select class="pi" id="kit-name-font"></select>
+      </div>
+      <div class="prow">
+        <span class="plbl">No. font</span>
+        <select class="pi" id="kit-num-font"></select>
+      </div>
+      <div class="prow">
         <span class="plbl">Price/m²</span>
         <input type="number" class="pi" id="kit-price" value="450" min="0" step="10">
         <span class="vbdg">KES</span>
@@ -803,107 +813,7 @@ select.pi{cursor:pointer}
 
 <!-- ====== JAVASCRIPT ====== -->
 <script>
-// ================================================================
-// FONT LIBRARY — all 8 categories with Google Fonts + fallbacks
-// ================================================================
-const FONT_CATS = [
-  {
-    id:'bold', label:'💥 Bold / Powerful / Statement', color:'#b09cff',
-    fonts:[
-      {f:'Anton', css:'Anton,Impact,sans-serif', note:'Anton — Impact Hype'},
-      {f:'Impact', css:'Impact,Arial Narrow,sans-serif', note:'Impact — Classic Force'},
-      {f:'League Gothic', css:'League Gothic,Arial Narrow,sans-serif', note:'League Gothic — Condensed Power'},
-      {f:'Oswald', css:'Oswald,Arial Narrow,sans-serif', note:'Oswald Heavy — Urban Bold'},
-      {f:'Bebas Neue', css:'Bebas Neue,Impact,sans-serif', note:'Bebas Neue — Clean Blocks'},
-      {f:'Archivo Black', css:'Archivo Black,Arial Black,sans-serif', note:'Archivo Black — Modern Bold'},
-      {f:'Montserrat Black', css:'Montserrat,Helvetica Neue,sans-serif', note:'Montserrat — Boss Energy'},
-      {f:'Righteous', css:'Righteous,Trebuchet MS,sans-serif', note:'Righteous — Retro Power'},
-    ]
-  },
-  {
-    id:'street', label:'🔥 Streetwear / Urban / Graffiti', color:'#ff8fa3',
-    fonts:[
-      {f:'Bangers', css:'Bangers,Impact,cursive', note:'Bangers — Comic Graffiti'},
-      {f:'Permanent Marker', css:'Permanent Marker,cursive', note:'Permanent Marker — Hand Tag'},
-      {f:'Rajdhani', css:'Rajdhani,sans-serif', note:'Rajdhani — Urban Sans'},
-      {f:'Exo 2', css:'Exo 2,Calibri,sans-serif', note:'Exo 2 — Street Tech'},
-      {f:'Roboto Condensed', css:'Roboto Condensed,Arial Narrow,sans-serif', note:'Roboto Condensed — Street Clean'},
-      {f:'Gloria Hallelujah', css:'Gloria Hallelujah,cursive', note:'Gloria Hallelujah — Raw Energy'},
-      {f:'Amatic SC', css:'Amatic SC,cursive', note:'Amatic SC — Handdrawn Drip'},
-    ]
-  },
-  {
-    id:'rasta', label:'🌈 Rasta / Afro / Cultural', color:'#4ade80',
-    fonts:[
-      {f:'Pacifico', css:'Pacifico,cursive', note:'Pacifico — Smooth Roots'},
-      {f:'Lobster', css:'Lobster,cursive', note:'Lobster — Caribbean Vibes'},
-      {f:'Righteous', css:'Righteous,cursive', note:'Righteous — Afro Rhythm'},
-      {f:'Ubuntu', css:'Ubuntu,sans-serif', note:'Ubuntu — Pan-African Tech'},
-      {f:'Comfortaa', css:'Comfortaa,cursive', note:'Comfortaa — African Round'},
-      {f:'Philosopher', css:'Philosopher,serif', note:'Philosopher — Roots Wisdom'},
-      {f:'Cinzel', css:'Cinzel,serif', note:'Cinzel — African Heritage'},
-    ]
-  },
-  {
-    id:'girly', label:'💅🏾 Girly / Soft / Aesthetic', color:'#f9a8d4',
-    fonts:[
-      {f:'Pacifico', css:'Pacifico,cursive', note:'Pacifico — Soft Waves'},
-      {f:'Dancing Script', css:'Dancing Script,cursive', note:'Dancing Script — Graceful'},
-      {f:'Allura', css:'Allura,cursive', note:'Allura — Elegant Script'},
-      {f:'Shrikhand', css:'Shrikhand,cursive', note:'Shrikhand — Girly Bold'},
-      {f:'Quicksand', css:'Quicksand,sans-serif', note:'Quicksand — Soft Sans'},
-      {f:'Amatic SC', css:'Amatic SC,cursive', note:'Amatic SC — Cute Handdrawn'},
-      {f:'Shadows Into Light', css:'Shadows Into Light,cursive', note:'Shadows Into Light — Poetic'},
-    ]
-  },
-  {
-    id:'classic', label:'🕰 Classic / Vintage / Luxury', color:'#fbbf24',
-    fonts:[
-      {f:'Playfair Display', css:'Playfair Display,Georgia,serif', note:'Playfair Display — Luxe Editorial'},
-      {f:'Abril Fatface', css:'Abril Fatface,Georgia,serif', note:'Abril Fatface — Vintage Press'},
-      {f:'Cormorant', css:'Cormorant,Georgia,serif', note:'Cormorant — Fine Luxury'},
-      {f:'Cinzel', css:'Cinzel,serif', note:'Cinzel — Classical Roman'},
-      {f:'Georgia', css:'Georgia,serif', note:'Georgia — Timeless Serif'},
-      {f:'Philosopher', css:'Philosopher,serif', note:'Philosopher — Editorial Class'},
-    ]
-  },
-  {
-    id:'tech', label:'⌚ Digital / Tech / Futuristic', color:'#38bdf8',
-    fonts:[
-      {f:'Orbitron', css:'Orbitron,monospace', note:'Orbitron — Cyber Display'},
-      {f:'Audiowide', css:'Audiowide,sans-serif', note:'Audiowide — Techwear'},
-      {f:'Exo 2', css:'Exo 2,sans-serif', note:'Exo 2 — Y2K Future'},
-      {f:'Space Grotesk', css:'Space Grotesk,sans-serif', note:'Space Grotesk — Neo Digital'},
-      {f:'Rajdhani', css:'Rajdhani,sans-serif', note:'Rajdhani — Data Terminal'},
-    ]
-  },
-  {
-    id:'brush', label:'🖊 Handwritten / Brush / Creative', color:'#fb923c',
-    fonts:[
-      {f:'Permanent Marker', css:'Permanent Marker,cursive', note:'Permanent Marker — Ink Brush'},
-      {f:'Gloria Hallelujah', css:'Gloria Hallelujah,cursive', note:'Gloria Hallelujah — Expressive'},
-      {f:'Yellowtail', css:'Yellowtail,cursive', note:'Yellowtail — Retro Script'},
-      {f:'Shadows Into Light', css:'Shadows Into Light,cursive', note:'Shadows Into Light — Poetic'},
-      {f:'Dancing Script', css:'Dancing Script,cursive', note:'Dancing Script — Flowing'},
-      {f:'Allura', css:'Allura,cursive', note:'Allura — Calligraphy Art'},
-    ]
-  },
-  {
-    id:'trendy', label:'🔥 Extra Trendy / Unique 2025–26', color:'#e879f9',
-    fonts:[
-      {f:'Abril Fatface', css:'Abril Fatface,serif', note:'Abril Fatface — Statement'},
-      {f:'Bangers', css:'Bangers,Impact,cursive', note:'Bangers — Pop Culture'},
-      {f:'Shrikhand', css:'Shrikhand,cursive', note:'Shrikhand — South Asian Bold'},
-      {f:'Comfortaa', css:'Comfortaa,cursive', note:'Comfortaa — Modern Round'},
-      {f:'Space Grotesk', css:'Space Grotesk,sans-serif', note:'Space Grotesk — 2026 Clean'},
-      {f:'Cinzel', css:'Cinzel,serif', note:'Cinzel — Editorial Trend'},
-    ]
-  },
-];
-
-// flatten for lookup
-const FONT_MAP = {};
-FONT_CATS.forEach(cat => cat.fonts.forEach(f => { FONT_MAP[f.f] = f.css; }));
+// FONT_CATS / FONT_MAP come from js/fonts.js (shop-floor jersey + HTV faces).
 
 const PALETTE = ['#7c5cfc','#fc5c7d','#5cfce8','#fbbf24','#4ade80','#f87171','#38bdf8','#fb923c','#e879f9','#a3e635','#ff6b35','#00d4ff','#ffd700','#ff1493','#00ff88','#ffffff','#000000','#1a1a2e'];
 
@@ -915,7 +825,7 @@ const EMOJI = ['🔥','💯','⚡','🌟','💎','🦁','🐯','🦋','🌊','�
 const S = {
   tool:'select', zoom:1, grid:true, wire:false, light:false,
   docW:30, docH:40, PPC:37.795, // pixels per cm
-  curFont:{f:'Bebas Neue',css:'Bebas Neue,Impact,sans-serif',note:'💥 Bold / Powerful',cat:'bold'},
+  curFont:{f:'Bebas Neue',css:'Bebas Neue,Impact,sans-serif',note:'⚽ Jersey / Kit',cat:'jersey'},
 };
 
 let FC = null; // fabric canvas

@@ -63,16 +63,19 @@
     const pieces = K.buildKit(players, preset, currentParts());
     if (!pieces.length) { showToast('Nothing to place — tick name / front / back', 'w'); return; }
 
-    const fill = (document.getElementById('fill-ci') || {}).value || '#111111';
-    const font = (S && S.curFont && S.curFont.f) || 'Bebas Neue';
+    const nameFont = (($('kit-name-font') || {}).value) || (S && S.curFont && S.curFont.f) || 'Bebas Neue';
+    const numFont = (($('kit-num-font') || {}).value) || 'Anton';
+    const nameCol = (($('kit-name-col') || {}).value) || '#ffffff';
+    const numCol = (($('kit-num-col') || {}).value) || '#111111';
     const pxPerMm = (typeof CutterEngine !== 'undefined') ? CutterEngine.PX_PER_MM : 3.779527559;
     const created = [];
 
     pieces.forEach(function (p) {
+      const isName = p.kind === 'name';
       const t = new fabric.Text(p.text, {
-        fontFamily: font,
+        fontFamily: isName ? nameFont : numFont,
         fontWeight: 'bold',
-        fill: fill,
+        fill: isName ? nameCol : numCol,
         originX: 'center',
         originY: 'center',
         objType: 'kit-' + p.kind,
@@ -147,6 +150,9 @@
 
   window.showKitModal = function showKitModal() {
     fillPresetSelect();
+    if (typeof CutterFonts !== 'undefined' && CutterFonts.fillKitFontSelects) {
+      CutterFonts.fillKitFontSelects();
+    }
     const m = $('kit-modal');
     if (m) m.classList.remove('h');
     previewCount();
@@ -243,6 +249,9 @@
 
   document.addEventListener('DOMContentLoaded', function () {
     fillPresetSelect();
+    if (typeof CutterFonts !== 'undefined' && CutterFonts.fillKitFontSelects) {
+      CutterFonts.fillKitFontSelects();
+    }
     const roster = $('kit-roster');
     if (roster) roster.addEventListener('input', previewCount);
     ['kit-preset', 'kit-skip-name', 'kit-skip-front', 'kit-skip-back', 'kit-price', 'kit-waste', 'kit-ccy'].forEach(function (id) {

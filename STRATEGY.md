@@ -38,6 +38,20 @@ Source: common kit practice (back 8–12", names 2–3", front 4–6").
 
 ## Roadmap to “shops prefer us”
 
+### Type (shop picker, not lifestyle fluff)
+Jersey printers need **distance-readable, weedable** faces. We dropped thin scripts / hairline serifs (Allura, Gloria Hallelujah, Playfair, Cormorant, Cinzel, Comfortaa…) and stocked:
+
+| Lane | Faces shops actually cut |
+|---|---|
+| Jersey names & numbers | Tourney, Anton, Bebas Neue, Oswald, Black Ops One, Russo One, Squada One, Teko |
+| Long names | Barlow Condensed, League Gothic, Staatliches, Roboto Condensed |
+| Digital watch / LCD / PE bibs | Share Tech Mono, Iceland, Orbitron, VT323, Michroma, Chakra Petch, Aldrich |
+| School / house kits | Luckiest Guy, Fredoka, Graduate, Paytone One, Bangers |
+| Corporate staff | Montserrat Black, Outfit, League Spartan, Space Grotesk |
+| Thick scripts only | Pacifico, Lobster, Yellowtail, Kaushan Script |
+
+Kit modal: **name font** (default Bebas Neue) and **number font** (default Anton) are separate. Digital-watch numbers are on the number list.
+
 ### Shipped
 1. **Team Kit** — paste `NAME,NUMBER` → generate name + front + back at real mm.
 2. **HTV prep** — Mirror all (heat-transfer), weed box around the job.

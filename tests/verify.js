@@ -48,6 +48,10 @@ ok('new document does not double-confirm', !html.includes("newDocument(){if(!con
 ok('undo guarded during loadFromJSON', html.includes('histBusy'));
 ok('desktop bridge used for native save', html.includes('window.desktop') && html.includes('saveFile'));
 ok('Google Fonts are non-blocking', html.includes("media=\"print\"") && html.includes("onload=\"this.media='all'\""));
+ok('shop font library loaded', html.includes('js/fonts.js') && fs.existsSync(path.join(ROOT, 'app', 'js', 'fonts.js')));
+ok('jersey + digital-watch faces linked', html.includes('Tourney') && html.includes('Black+Ops+One') && html.includes('Share+Tech+Mono') && html.includes('Iceland'));
+ok('thin weeding fonts removed from picker', !html.includes('Gloria Hallelujah') && !html.includes('Allura') && !html.includes('Cormorant') && !html.includes('Philosopher'));
+ok('kit name vs number font selects', html.includes('id="kit-name-font"') && html.includes('id="kit-num-font"'));
 ok('retina scaling enabled', html.includes('enableRetinaScaling'));
 ok('Electron main + preload exist',
   fs.existsSync(path.join(ROOT, 'electron', 'main.js')) &&

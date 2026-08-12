@@ -43,7 +43,10 @@ Outputs land in `dist/`.
 ```
 app/                 studio UI (offline: local Fabric + ImageTracer)
   js/engine.js       units, nest, DXF, HPGL, path math
+  js/fonts.js        jersey / HTV / digital-watch type library
   js/cut-app.js      desktop cutter layer
 electron/            Windows + Linux shell
 tests/               readiness + engine accuracy
 ```
+
+Type faces are shop-floor only (Tourney, Anton, Black Ops One, Share Tech Mono / Iceland digital watch…). Thin scripts that snap on cheap HTV were removed. Kit uses a **name font** and a **number font**.

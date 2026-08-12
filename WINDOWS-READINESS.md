@@ -50,7 +50,7 @@ The packaged app:
 2. **Vectorize is a preview, not a tracer.** It walks Sobel edge pixels into a zigzag path. Logos will not weed cleanly. Need Potrace / imagetracerjs.
 3. **No HPGL / USB plotter driver.** Export is SVG / DXF / PNG. Sending jobs to a Graphtec / Roland / Chinese cutter needs a separate backend (serial/USB).
 4. **Auto-nest is a shelf packer.** No rotation, no true-shape nesting.
-5. **Google Fonts (optional).** Offline Windows uses system fallbacks; letter-spacing/kerning of Bebas/Anton will differ until fonts are bundled as `.woff2`.
+5. **Google Fonts (optional).** Offline Windows uses system fallbacks (Impact / Arial Black / Consolas); letter-spacing of Bebas/Anton/Tourney will differ until those faces are bundled as `.woff2`. Digital-watch faces (Share Tech Mono, Iceland, VT323) fall back to Consolas.
 
 ---
 
