@@ -69,6 +69,8 @@ ok('ImageTracer vendored for logo/text outlines', fs.existsSync(path.join(ROOT, 
 ok('HPGL export in UI', html.includes('hpgl') && html.includes('exp-outline'));
 ok('unit selector mm/cm/in', html.includes('id="unit-in"') && html.includes('Millimetres'));
 ok('desktop cut-app layer loaded', html.includes('js/cut-app.js'));
+ok('Electron enables Web Serial for plotter send',
+  fs.readFileSync(path.join(ROOT, 'electron', 'main.js'), 'utf8').includes("enableBlinkFeatures: 'Serial'"));
 ok('map-zoom geometry layer loaded', html.includes('js/map-zoom.js'));
 ok('team kit production wired', html.includes('js/kit-prod.js') && html.includes('id="kit-modal"') && html.includes('mirrorForHtv'));
 ok('CSV + quote + plotter send wired', html.includes('id="kit-csv"') && html.includes('kit-export-colors') && html.includes('kit-send') && html.includes('quote-out'));

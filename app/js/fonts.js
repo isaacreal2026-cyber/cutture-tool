@@ -16,8 +16,8 @@
 (function (root) {
   'use strict';
 
-  function face(f, css, note) {
-    return { f: f, css: css, note: note };
+  function face(f, css, note, weight) {
+    return { f: f, css: css, note: note, weight: weight || 700 };
   }
 
   const IMPACT = 'Impact,Arial Black,sans-serif';
@@ -48,7 +48,7 @@
         face('Titan One', 'Titan One,' + BLACK, 'Titan One — heavyweight numbers'),
         face('Alfa Slab One', 'Alfa Slab One,Rockwell,serif', 'Alfa Slab One — athletic slab'),
         face('Bungee', 'Bungee,' + IMPACT, 'Bungee — urban sports block'),
-        face('Montserrat Black', 'Montserrat,' + BLACK, 'Montserrat Black — staff + kit'),
+        face('Montserrat', 'Montserrat,' + BLACK, 'Montserrat Black — staff + kit', 900),
         face('Changa One', 'Changa One,' + IMPACT, 'Changa One — thick sports display'),
         face('Righteous', 'Righteous,Trebuchet MS,sans-serif', 'Righteous — retro athletic'),
       ],
@@ -104,7 +104,7 @@
     {
       id: 'corporate', label: '💼 Corporate / staff tees', color: '#fbbf24',
       fonts: [
-        face('Montserrat Black', 'Montserrat,' + BLACK, 'Montserrat Black — org lockup'),
+        face('Montserrat', 'Montserrat,' + BLACK, 'Montserrat Black — org lockup', 900),
         face('Oswald', 'Oswald,' + NARROW, 'Oswald — staff name + dept'),
         face('Space Grotesk', 'Space Grotesk,Segoe UI,sans-serif', 'Space Grotesk — modern brand'),
         face('Outfit', 'Outfit,Segoe UI,sans-serif', 'Outfit — clean staff tee'),
@@ -200,6 +200,34 @@
     fillSelect(document.getElementById('kit-num-font'), KIT_NUM_FONTS, 'Anton');
   }
 
+  const SYSTEM_FACES = { Impact: 1 };
+
+  function googleFamilyNames() {
+    return GOOGLE_FAMILIES.map(function (s) {
+      return s.split(':')[0].replace(/\+/g, ' ');
+    });
+  }
+
+  function findFace(name) {
+    let hit = null;
+    function scan(list) {
+      (list || []).forEach(function (f) { if (f.f === name) hit = f; });
+    }
+    FONT_CATS.forEach(function (cat) { scan(cat.fonts); });
+    scan(KIT_NAME_FONTS);
+    scan(KIT_NUM_FONTS);
+    return hit;
+  }
+
+  /** Props Fabric must set so the loaded Google file actually paints. */
+  function fabricProps(name) {
+    const face = findFace(name);
+    return {
+      fontFamily: (face && face.f) || name || 'Bebas Neue',
+      fontWeight: String((face && face.weight) || 700),
+    };
+  }
+
   const api = {
     FONT_CATS: FONT_CATS,
     FONT_MAP: FONT_MAP,
@@ -209,6 +237,10 @@
     GOOGLE_FAMILIES: GOOGLE_FAMILIES,
     googleFontsHref: googleFontsHref,
     fillKitFontSelects: fillKitFontSelects,
+    SYSTEM_FACES: SYSTEM_FACES,
+    googleFamilyNames: googleFamilyNames,
+    findFace: findFace,
+    fabricProps: fabricProps,
   };
 
   root.CutterFonts = api;

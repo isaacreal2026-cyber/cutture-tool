@@ -72,9 +72,12 @@
 
     pieces.forEach(function (p) {
       const isName = p.kind === 'name';
+      const type = (typeof CutterFonts !== 'undefined' && CutterFonts.fabricProps)
+        ? CutterFonts.fabricProps(isName ? nameFont : numFont)
+        : { fontFamily: isName ? nameFont : numFont, fontWeight: '700' };
       const t = new fabric.Text(p.text, {
-        fontFamily: isName ? nameFont : numFont,
-        fontWeight: 'bold',
+        fontFamily: type.fontFamily,
+        fontWeight: type.fontWeight,
         fill: isName ? nameCol : numCol,
         originX: 'center',
         originY: 'center',

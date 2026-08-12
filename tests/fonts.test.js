@@ -24,7 +24,7 @@ check('eight shop lanes', F.FONT_CATS.map(function (c) { return c.id; }).join(',
 
 const must = ['Tourney', 'Anton', 'Bebas Neue', 'Oswald', 'Black Ops One', 'Russo One',
   'Share Tech Mono', 'Iceland', 'Orbitron', 'VT323', 'Barlow Condensed', 'Luckiest Guy',
-  'Montserrat Black', 'Impact'];
+  'Montserrat', 'Impact'];
 must.forEach(function (f) {
   check('has ' + f, unique.indexOf(f) >= 0);
 });
@@ -71,6 +71,26 @@ check('kit places names and numbers on their own faces', kitUi.indexOf('kit-name
   kitUi.indexOf('kit-num-font') >= 0 && kitUi.indexOf('isName ? nameFont : numFont') >= 0);
 check('kit uses name/number vinyl colours', kitUi.indexOf('kit-name-col') >= 0 &&
   kitUi.indexOf('isName ? nameCol : numCol') >= 0);
+
+check('no fake CSS family Montserrat Black', unique.indexOf('Montserrat Black') < 0);
+check('Montserrat paints as weight 900', F.fabricProps('Montserrat').fontFamily === 'Montserrat' &&
+  F.fabricProps('Montserrat').fontWeight === '900');
+check('Anton fabric family is Anton', F.fabricProps('Anton').fontFamily === 'Anton');
+
+const googleNames = F.googleFamilyNames();
+const orphans = unique.filter(function (n) {
+  return !F.SYSTEM_FACES[n] && googleNames.indexOf(n) < 0;
+});
+check('every picker face is a real Google family or Impact', orphans.length === 0, orphans.join(','));
+
+googleNames.forEach(function (n) {
+  const token = 'family=' + n.replace(/ /g, '+');
+  check('studio href has ' + n, html.indexOf(token) >= 0);
+});
+
+check('studio applies fontWeight on add/select', html.indexOf('fontWeight: String(S.curFont.weight') >= 0 &&
+  html.indexOf("obj.set({ fontFamily: font.f, fontWeight:") >= 0);
+check('kit uses CutterFonts.fabricProps', kitUi.indexOf('CutterFonts.fabricProps') >= 0);
 
 if (failed) {
   console.log('\nfont tests FAILED: ' + failed);

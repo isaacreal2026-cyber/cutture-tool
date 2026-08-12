@@ -848,7 +848,7 @@ const EMOJI = ['🔥','💯','⚡','🌟','💎','🦁','🐯','🦋','🌊','�
 const S = {
   tool:'select', zoom:1, grid:true, wire:false, light:false,
   docW:30, docH:40, PPC:37.795, // pixels per cm
-  curFont:{f:'Bebas Neue',css:'Bebas Neue,Impact,sans-serif',note:'⚽ Jersey / Kit',cat:'jersey'},
+  curFont:{f:'Bebas Neue',css:'Bebas Neue,Impact,sans-serif',note:'⚽ Jersey / Kit',cat:'jersey',weight:700},
 };
 
 let FC = null; // fabric canvas
@@ -945,6 +945,11 @@ function addTshirtGuide() {
 // ================================================================
 function buildFontDropdown() {
   const dd = document.getElementById('fpdrop');
+  if (!dd) return;
+  if (typeof FONT_CATS === 'undefined' || !FONT_CATS.length) {
+    showToast('Font library failed to load', 'e');
+    return;
+  }
   dd.innerHTML = '';
   FONT_CATS.forEach(cat => {
     const ch = document.createElement('div');
@@ -985,16 +990,20 @@ function toggleFP() {
 }
 
 function selectFont(font, cat) {
-  S.curFont = { f: font.f, css: font.css, note: font.note, cat: cat.id };
+  S.curFont = { f: font.f, css: font.css, note: font.note, cat: cat.id, weight: font.weight || 700 };
   document.getElementById('fpname').textContent = font.f;
   document.getElementById('fpname').style.fontFamily = font.css;
+  document.getElementById('fpname').style.fontWeight = String(S.curFont.weight);
   document.getElementById('fpsub').textContent = cat.label;
   document.querySelectorAll('.fpitem').forEach(el => el.classList.toggle('sel', el.dataset.f === font.f));
   document.getElementById('fpdrop').classList.remove('open');
   document.getElementById('fpbar').classList.remove('open');
   document.getElementById('fparr').textContent = '▾';
   const obj = FC?.getActiveObject();
-  if (obj && obj.type === 'text') { obj.set('fontFamily', font.f); FC.renderAll(); }
+  if (obj && obj.type === 'text') {
+    obj.set({ fontFamily: font.f, fontWeight: String(S.curFont.weight) });
+    FC.renderAll();
+  }
 }
 
 // ================================================================
@@ -1030,6 +1039,7 @@ function addTextAt(x, y) {
   const txt = new fabric.Text(document.getElementById('tc-in').value || 'MY TEXT', {
     left:x, top:y, originX:'center', originY:'center',
     fontFamily: S.curFont.f,
+    fontWeight: String(S.curFont.weight || 700),
     fontSize: parseInt(document.getElementById('fs-in').value) || 60,
     fill: document.getElementById('fill-ci').value,
     stroke: (parseInt(document.getElementById('sw-sl').value) > 0) ? document.getElementById('str-ci').value : null,
@@ -1081,7 +1091,7 @@ function applyCurve() {
   const mode = document.getElementById('tc-curve').value;
   const obj = FC.getActiveObject();
   if (!obj || obj.type !== 'text') { showToast('Select a text object first', 'w'); return; }
-  const {text, fontFamily, fontSize, fill} = obj;
+  const {text, fontFamily, fontSize, fill, fontWeight} = obj;
   const cx = obj.left, cy = obj.top;
   FC.remove(obj);
   if (mode === 'none') { addTextAt(cx, cy); return; }
@@ -1095,7 +1105,7 @@ function applyCurve() {
   // Fabric 5.x: text-on-path is fabric.Text({ path }), not fabric.TextPath (v6 only)
   const path = new fabric.Path(pathStr, { fill: null, stroke: null, visible: false });
   const tp = new fabric.Text(text, {
-    fontFamily, fontSize, fill,
+    fontFamily, fontSize, fill, fontWeight,
     left: cx, top: cy, originX: 'center', originY: 'center',
     textAlign: 'center',
     path,

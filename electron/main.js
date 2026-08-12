@@ -32,6 +32,7 @@ function createWindow() {
       sandbox: true,
       spellcheck: false,
       backgroundThrottling: false,
+      enableBlinkFeatures: 'Serial',
     },
   });
 
