@@ -63,6 +63,7 @@ Kit modal: **name font** (default Bebas Neue) and **number font** (default Anton
 
 ### Next
 8. ~~Press recipe card~~ **Shipped** — Kit → Press (PU / glitter / flock / printable / sign vinyl).
+8b. ~~Reg marks / rotate nest / job ticket / CSV size~~ **Shipped**.
 9. Native USB drivers for Graphtec / Roland / Chinese plotters where Web Serial is blocked.
 
 ### Later (still no UI rebuild)

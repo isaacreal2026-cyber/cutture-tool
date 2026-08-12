@@ -38,13 +38,15 @@
     String(text || '').split(/\r?\n/).forEach(function (raw, idx) {
       const line = raw.replace(/^\s+|\s+$/g, '');
       if (!line || line.charAt(0) === '#') return;
-      let name = '', number = '';
+      let name = '', number = '', size = '';
       if (line.indexOf(',') >= 0 || line.indexOf('\t') >= 0 || line.indexOf(';') >= 0) {
         const parts = line.split(/[,;\t]/).map(function (s) { return s.replace(/^\s+|\s+$/g, ''); });
         if (/^\d+[A-Za-z]?$/.test(parts[0]) && parts[1]) {
           number = parts[0]; name = parts[1];
+          size = parts[2] || '';
         } else {
           name = parts[0]; number = parts[1] || '';
+          size = parts[2] || '';
         }
       } else {
         const m = line.match(/^(.*?)[\s]+(\d+[A-Za-z]?)$/);
@@ -59,9 +61,19 @@
       const key = (number || ('x' + idx)) + '|' + name;
       if (seen[key]) return;
       seen[key] = 1;
-      players.push({ name: name, number: number, line: idx + 1 });
+      const preset = presetFromSize(size);
+      players.push({ name: name, number: number, line: idx + 1, size: size, preset: preset });
     });
     return players;
+  }
+
+  function presetFromSize(size) {
+    const s = String(size || '').toLowerCase();
+    if (!s) return '';
+    if (/youth|junior|kids|u1[0-6]|ys|ym|yl/.test(s)) return 'football_youth';
+    if (/school|pe\b|house/.test(s)) return 'school_pe';
+    if (/adult|senior|men|women|^xs$|^s$|^m$|^l$|^xl$|^xxl$/.test(s)) return 'football_adult';
+    return '';
   }
 
   function kitPieces(player, preset, parts) {
@@ -83,7 +95,7 @@
   function buildKit(players, preset, parts) {
     const list = [];
     (players || []).forEach(function (pl) {
-      kitPieces(pl, preset, parts).forEach(function (piece) { list.push(piece); });
+      kitPieces(pl, pl.preset || preset, parts).forEach(function (piece) { list.push(piece); });
     });
     return list;
   }
@@ -118,13 +130,15 @@
     const head = parseCsvLine(lines[0]).map(function (h) { return h.toLowerCase(); });
     const looksHeader = head.some(function (h) { return /name|player|jina/.test(h); })
       || head.some(function (h) { return /num|jersey|no\.?|#/.test(h); });
-    let start = 0, ni = 0, numi = 1;
+    let start = 0, ni = 0, numi = 1, si = -1;
     if (looksHeader) {
       start = 1;
       const nIdx = head.findIndex(function (h) { return /name|player|jina/.test(h); });
       const uIdx = head.findIndex(function (h) { return /num|jersey|no\.?|#/.test(h); });
+      const sIdx = head.findIndex(function (h) { return /size|age|youth|adult/.test(h); });
       if (nIdx >= 0) ni = nIdx;
       if (uIdx >= 0) numi = uIdx;
+      if (sIdx >= 0) si = sIdx;
     }
     const block = [];
     for (let i = start; i < lines.length; i++) {
@@ -132,7 +146,8 @@
       if (!cols.length) continue;
       const name = (cols[ni] || '').replace(/,/g, ' ');
       const number = cols[numi] || '';
-      block.push(name + '\t' + number);
+      const size = si >= 0 ? (cols[si] || '') : (cols[2] || '');
+      block.push(name + '\t' + number + '\t' + size);
     }
     return parseRoster(block.join('\n'));
   }
@@ -213,10 +228,37 @@
     return p.tempC + '°C · ' + p.timeS + 's · peel ' + p.peel + ' · ' + p.note;
   }
 
+  function buildTicket(opts) {
+    const o = opts || {};
+    const players = o.players || [];
+    const pieces = o.pieces || [];
+    const quote = o.quote || {};
+    const press = formatPress(o.press);
+    const preset = (PRESETS[o.preset] || PRESETS.football_adult).label;
+    const colours = (o.colours || []).join(', ') || '—';
+    const lines = [
+      'CutterStudio Pro — job ticket',
+      'Date: ' + (o.date || new Date().toISOString().slice(0, 10)),
+      'Preset: ' + preset,
+      'Press: ' + press,
+      'Players: ' + players.length,
+      'Pieces: ' + pieces.length,
+      'Quote: ' + (quote.text || '—'),
+      'Colours: ' + colours,
+      '',
+      'Cut operator: ______________',
+      'Press operator: ______________',
+      'Notes: ' + (o.notes || ''),
+    ];
+    return { text: lines.join('\n'), lines: lines, press: press, preset: preset };
+  }
+
   return {
     PRESETS: PRESETS,
     PRESS: PRESS,
     formatPress: formatPress,
+    presetFromSize: presetFromSize,
+    buildTicket: buildTicket,
     parseRoster: parseRoster,
     parseRosterCsv: parseRosterCsv,
     parseCsvLine: parseCsvLine,

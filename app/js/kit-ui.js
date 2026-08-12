@@ -174,6 +174,7 @@
 
   window.showKitModal = function showKitModal() {
     fillPresetSelect();
+    fillPressSelect();
     if (typeof CutterFonts !== 'undefined' && CutterFonts.fillKitFontSelects) {
       CutterFonts.fillKitFontSelects();
     }
@@ -201,7 +202,9 @@
     const fc = board();
     if (!fc || typeof CutterEngine === 'undefined') return [];
     const E = CutterEngine;
-    const items = fc.getObjects().filter(function (o) { return !o.isGuide && o.objType !== 'weed-box'; }).map(function (o) {
+    const items = fc.getObjects().filter(function (o) {
+      return !o.isGuide && !(typeof CutterEngine !== 'undefined' && CutterEngine.isShopFixture && CutterEngine.isShopFixture(o));
+    }).map(function (o) {
       return { fill: o.fill, objType: o.objType, ref: o };
     });
     return K.splitJobsByColor(items).map(function (job) {

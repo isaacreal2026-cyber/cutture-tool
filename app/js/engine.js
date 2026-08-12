@@ -77,6 +77,74 @@
     return { placed, overflow };
   }
 
+  function nestTrue(boxes, sheetW, sheetH, margin) {
+    const m = Math.max(0, Number(margin) || 0);
+    const list = boxes || [];
+    let cx = m, cy = m, rowH = 0, overflow = false;
+    const placed = list.map(function (b, i) {
+      const w0 = Number(b.w) || 0, h0 = Number(b.h) || 0;
+      function trial(w, h, rot) {
+        let x = cx, y = cy, rh = rowH;
+        const W = w + m * 2, H = h + m * 2;
+        if (x + W > sheetW - m && x > m) {
+          x = m;
+          y += rh + m;
+          rh = 0;
+        }
+        const ov = (W > sheetW - m * 2) || (H > sheetH - m * 2) || (y + H > sheetH - m);
+        return { x: x, y: y, W: W, H: H, w: w, h: h, rh: rh, overflow: ov, rotated: rot };
+      }
+      const a = trial(w0, h0, false);
+      const b90 = trial(h0, w0, true);
+      let pick = a;
+      if (a.overflow && !b90.overflow) pick = b90;
+      else if (!a.overflow && b90.overflow) pick = a;
+      else if (!a.overflow && !b90.overflow) {
+        const aWraps = a.x < cx && cx > m;
+        const bWraps = b90.x < cx && cx > m;
+        if (aWraps && !bWraps) pick = b90;
+        else if (!aWraps && bWraps) pick = a;
+        else pick = a.H <= b90.H ? a : b90;
+      } else {
+        pick = a.H <= b90.H ? a : b90;
+      }
+      if (pick.overflow) overflow = true;
+      cx = pick.x + pick.W;
+      cy = pick.y;
+      rowH = Math.max(pick.rh, pick.H);
+      return {
+        i: i,
+        left: pick.x + pick.W / 2 - m,
+        top: pick.y + pick.H / 2 - m,
+        w: pick.w,
+        h: pick.h,
+        rotated: pick.rotated,
+      };
+    });
+    return { placed: placed, overflow: overflow };
+  }
+
+  function regMarks(bbox, opts) {
+    const o = opts || {};
+    const L = Math.max(2, Number(o.markMm) || 8);
+    const g = Math.max(0, Number(o.gapMm) || 3);
+    const x0 = Number(bbox.left) - g;
+    const y0 = Number(bbox.top) - g;
+    const x1 = Number(bbox.right) + g;
+    const y1 = Number(bbox.bottom) + g;
+    return [
+      { type: 'polyline', closed: false, points: [{ x: x0, y: y0 + L }, { x: x0, y: y0 }, { x: x0 + L, y: y0 }] },
+      { type: 'polyline', closed: false, points: [{ x: x1 - L, y: y0 }, { x: x1, y: y0 }, { x: x1, y: y0 + L }] },
+      { type: 'polyline', closed: false, points: [{ x: x1, y: y1 - L }, { x: x1, y: y1 }, { x: x1 - L, y: y1 }] },
+      { type: 'polyline', closed: false, points: [{ x: x0 + L, y: y1 }, { x: x0, y: y1 }, { x: x0, y: y1 - L }] },
+    ];
+  }
+
+  function isShopFixture(obj) {
+    const t = obj && obj.objType;
+    return t === 'weed-box' || t === 'reg-mark';
+  }
+
   function simplify(points, epsilon) {
     if (!points || points.length <= 2) return points ? points.slice() : [];
     const eps = Math.max(0, epsilon || 0);
@@ -508,6 +576,9 @@
     sheetPx,
     formatMeasure,
     nest,
+    nestTrue,
+    regMarks,
+    isShopFixture,
     simplify,
     dxf,
     hpgl,

@@ -609,7 +609,12 @@ select.pi{cursor:pointer}
           <div class="bgrp" style="flex-wrap:wrap">
             <button class="btn bs bsm" onclick="mirrorForHtv()">Mirror for press</button>
             <button class="btn bs bsm" onclick="addWeedBox()">Weed box</button>
+            <button class="btn bs bsm" onclick="addRegMarks()">Reg marks</button>
+            <button class="btn bs bsm" onclick="showJobTicket()">Job ticket</button>
           </div>
+          <label style="font-size:11px;display:flex;align-items:center;gap:5px;cursor:pointer;margin-top:8px">
+            <input type="checkbox" id="nest-rotate"> Rotate 90° when nesting
+          </label>
         </div>
         <div class="sec">
           <div class="sttl">🎨 Vinyl Color Layers</div>
@@ -807,6 +812,18 @@ select.pi{cursor:pointer}
   </div>
 </div>
 
+
+<!-- JOB TICKET (second operator) -->
+<div class="mover h" id="ticket-modal">
+  <div class="modal">
+    <div class="mttl">Job ticket — cut / press</div>
+    <pre id="ticket-body" class="exprev" style="white-space:pre-wrap;font-family:monospace"></pre>
+    <div class="mact">
+      <button class="btn bs" onclick="closeModal('ticket-modal')">Close</button>
+      <button class="btn bp" id="ticket-download">Download ticket</button>
+    </div>
+  </div>
+</div>
 <!-- ICON MODAL -->
 <div class="mover h" id="ico-modal">
   <div class="modal" style="max-width:360px">
@@ -1919,6 +1936,7 @@ switchTab('props');
 <script src="js/image-editor.js"></script>
 <script src="js/kit-prod.js"></script>
 <script src="js/kit-ui.js"></script>
+<script src="js/shop-floor.js"></script>
 <script src="js/map-zoom.js"></script>
 </body>
 </html>

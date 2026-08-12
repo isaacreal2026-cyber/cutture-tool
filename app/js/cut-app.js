@@ -106,23 +106,30 @@
   };
 
   window.autoNest = function autoNest() {
-    const objs = FC.getObjects().filter((o) => !o.isGuide);
+    const skip = function (o) { return o.isGuide || (E.isShopFixture && E.isShopFixture(o)); };
+    const objs = FC.getObjects().filter((o) => !skip(o));
     if (!objs.length) { showToast('Add objects first', 'w'); return; }
     const marginMm = parseFloat(document.getElementById('nm-in').value) || 3;
     const marginPx = marginMm * E.PX_PER_MM;
+    const rotate = !!(document.getElementById('nest-rotate') && document.getElementById('nest-rotate').checked);
     const boxes = objs.map((o) => {
       o.setCoords();
       const b = o.getBoundingRect(true, true);
       return { w: b.width, h: b.height };
     });
-    const result = E.nest(boxes, FC.width, FC.height, marginPx);
+    const result = (rotate && E.nestTrue) ? E.nestTrue(boxes, FC.width, FC.height, marginPx) : E.nest(boxes, FC.width, FC.height, marginPx);
     result.placed.forEach((p) => {
       const o = objs[p.i];
+      if (p.rotated) {
+        o.set('angle', (o.angle || 0) + 90);
+        o.setCoords();
+      }
       o.setPositionByOrigin(new fabric.Point(p.left, p.top), 'center', 'center');
       o.setCoords();
     });
     FC.renderAll(); saveH(); updateStats();
-    showToast(result.overflow ? 'Nest overflow — enlarge the sheet' : 'Auto-nest complete', result.overflow ? 'w' : 's');
+    const nRot = result.placed.filter((p) => p.rotated).length;
+    showToast(result.overflow ? 'Nest overflow — enlarge the sheet' : ('Auto-nest complete' + (nRot ? ' · ' + nRot + ' rotated 90°' : '')), result.overflow ? 'w' : 's');
   };
 
   window.updateStats = function updateStats() {
