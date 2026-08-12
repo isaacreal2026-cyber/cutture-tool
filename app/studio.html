@@ -326,7 +326,7 @@ select.pi{cursor:pointer}
   <button class="mbtn" onclick="newDocument()">New</button>
   <button class="mbtn" onclick="openProject()">Open</button>
   <button class="mbtn" onclick="saveProject()">Save</button>
-  <button class="mbtn" onclick="showToast('Ctrl+Z Undo · Ctrl+Y Redo · Ctrl+D Duplicate · Ctrl+S Export','s')">Edit</button>
+  <button class="mbtn" onclick="showEditModal()">Edit</button>
   <button class="mbtn" onclick="showToast('Grid · Rulers · Cut Preview via toolbar','s')">View</button>
   <button class="mbtn" onclick="showToast('Group · Align · Flip · Layer order in toolbar','s')">Arrange</button>
   <div class="tsep"></div>
@@ -465,6 +465,11 @@ select.pi{cursor:pointer}
             </select>
           </div>
           <div class="prow">
+            <span class="plbl">Bend</span>
+            <input type="range" class="pi" id="tc-curve-amt" min="10" max="100" value="50" oninput="document.getElementById('tc-curve-amt-v').textContent=this.value+'%'">
+            <span class="vbdg" id="tc-curve-amt-v">50%</span>
+          </div>
+          <div class="prow">
             <span class="plbl">Style</span>
             <div class="bgrp">
               <button class="btn bs bsm" onclick="tBold()"><b>B</b></button>
@@ -514,7 +519,11 @@ select.pi{cursor:pointer}
             <div class="sshape" onclick="addShape('arrow')" title="Arrow">➜</div>
             <div class="sshape" onclick="addShape('diamond')" title="Diamond">◆</div>
             <div class="sshape" onclick="addShape('line')" title="Line">—</div>
+            <div class="sshape" onclick="importCustomShape()" title="Add custom shape">+</div>
           </div>
+          <div class="sgrid" id="custom-shapes"></div>
+          <input type="file" id="shape-up" accept="image/*,.svg" style="display:none">
+          <button class="btn bs bw bsm" onclick="saveSelectionToQuickShapes()" style="margin-top:6px">Save selection to Quick Shapes</button>
         </div>
 
         <!-- COLOR PALETTE -->
@@ -813,6 +822,70 @@ select.pi{cursor:pointer}
 </div>
 
 
+
+<!-- EDIT BAR (general shortcut — text vs image tools) -->
+<div class="mover h" id="edit-modal">
+  <div class="modal" style="max-width:480px">
+    <div class="mttl">Edit</div>
+    <div class="exprev" id="edit-sub">Select an object on the sheet</div>
+    <div class="sec">
+      <div class="sttl">General</div>
+      <div class="bgrp" style="flex-wrap:wrap">
+        <button class="btn bs bsm" onclick="duplicateSelected()">Duplicate</button>
+        <button class="btn bs bsm" onclick="deleteSelected()">Delete</button>
+        <button class="btn bs bsm" onclick="flipH()">Flip H</button>
+        <button class="btn bs bsm" onclick="flipV()">Flip V</button>
+        <button class="btn bs bsm" onclick="groupSelected()">Group</button>
+        <button class="btn bs bsm" onclick="bringForward()">Fwd</button>
+        <button class="btn bs bsm" onclick="sendBackward()">Back</button>
+      </div>
+    </div>
+    <div class="sec" id="edit-text" style="display:none">
+      <div class="sttl">Text</div>
+      <div class="prow"><span class="plbl">Content</span><input type="text" class="pi" id="edit-text-in"></div>
+      <div class="prow">
+        <span class="plbl">Curve</span>
+        <select class="pi" id="edit-curve">
+          <option value="none">None</option>
+          <option value="arc-up">Arc Up</option>
+          <option value="arc-down">Arc Down</option>
+          <option value="wave">Wave</option>
+          <option value="circle">Full Circle</option>
+        </select>
+      </div>
+      <div class="prow">
+        <span class="plbl">Bend</span>
+        <input type="range" class="pi" id="edit-curve-amt" min="10" max="100" value="50">
+        <span class="vbdg" id="edit-curve-amt-v">50%</span>
+      </div>
+      <div class="exprev" id="edit-pair-hint">Name font pairs with a number font</div>
+      <div class="bgrp" style="flex-wrap:wrap">
+        <button class="btn bp bsm" onclick="applyCurve()">Apply curve</button>
+        <button class="btn bs bsm" onclick="addPairedKitText()">Add name + number</button>
+        <button class="btn bs bsm" onclick="tBold()"><b>B</b></button>
+        <button class="btn bs bsm" onclick="tItalic()"><i>I</i></button>
+      </div>
+    </div>
+    <div class="sec" id="edit-image" style="display:none">
+      <div class="sttl">Image / logo</div>
+      <div class="bgrp" style="flex-wrap:wrap">
+        <button class="btn bp bsm" onclick="openImageEditorFromObject()">BG remove / crop</button>
+        <button class="btn bs bsm" onclick="applyVect()">Trace cut path</button>
+        <button class="btn bs bsm" onclick="mirrorForHtv()">Mirror</button>
+      </div>
+    </div>
+    <div class="sec" id="edit-none">
+      <div class="sttl">Nothing selected</div>
+      <div class="bgrp" style="flex-wrap:wrap">
+        <button class="btn bs bsm" onclick="document.getElementById('fup').click();closeModal('edit-modal')">Import logo</button>
+        <button class="btn bs bsm" onclick="addText();closeModal('edit-modal')">Add text</button>
+      </div>
+    </div>
+    <div class="mact">
+      <button class="btn bs" onclick="closeModal('edit-modal')">Close</button>
+    </div>
+  </div>
+</div>
 <!-- JOB TICKET (second operator) -->
 <div class="mover h" id="ticket-modal">
   <div class="modal">
@@ -1936,6 +2009,7 @@ switchTab('props');
 <script src="js/image-editor.js"></script>
 <script src="js/kit-prod.js"></script>
 <script src="js/kit-ui.js"></script>
+<script src="js/edit-bar.js"></script>
 <script src="js/shop-floor.js"></script>
 <script src="js/map-zoom.js"></script>
 </body>

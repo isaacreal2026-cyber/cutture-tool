@@ -73,6 +73,7 @@ ok('Electron enables Web Serial for plotter send',
   fs.readFileSync(path.join(ROOT, 'electron', 'main.js'), 'utf8').includes("enableBlinkFeatures: 'Serial'"));
 ok('press recipe + baud in kit modal', html.includes('id="kit-press"') && html.includes('id="kit-baud"'));
 ok('reg marks + job ticket + rotate nest wired', html.includes('addRegMarks') && html.includes('id="ticket-modal"') && html.includes('id="nest-rotate"') && html.includes('js/shop-floor.js'));
+ok('Edit bar modal + curve + custom shapes', html.includes('id="edit-modal"') && html.includes('js/edit-bar.js') && html.includes('id="tc-curve-amt"') && html.includes('saveSelectionToQuickShapes'));
 ok('map-zoom geometry layer loaded', html.includes('js/map-zoom.js'));
 ok('team kit production wired', html.includes('js/kit-prod.js') && html.includes('id="kit-modal"') && html.includes('mirrorForHtv'));
 ok('CSV + quote + plotter send wired', html.includes('id="kit-csv"') && html.includes('kit-export-colors') && html.includes('kit-send') && html.includes('quote-out'));

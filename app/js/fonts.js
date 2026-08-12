@@ -228,9 +228,65 @@
     };
   }
 
+  /** Each name face ships with a number face shops actually cut. */
+  const FONT_PAIRS = {
+    'Bebas Neue': 'Anton',
+    Oswald: 'Tourney',
+    Tourney: 'Tourney',
+    Anton: 'Anton',
+    'Black Ops One': 'Black Ops One',
+    'Russo One': 'Russo One',
+    'Squada One': 'Squada One',
+    Teko: 'Teko',
+    'Barlow Condensed': 'Anton',
+    'League Gothic': 'Anton',
+    Staatliches: 'Anton',
+    'Roboto Condensed': 'Anton',
+    'Archivo Black': 'Impact',
+    Impact: 'Impact',
+    'Titan One': 'Titan One',
+    Bungee: 'Bungee',
+    Montserrat: 'Anton',
+    'Changa One': 'Changa One',
+    Righteous: 'Anton',
+    'Share Tech Mono': 'Share Tech Mono',
+    Iceland: 'Iceland',
+    Orbitron: 'Orbitron',
+    'Luckiest Guy': 'Anton',
+    Fredoka: 'Anton',
+    Graduate: 'Anton',
+    'Paytone One': 'Anton',
+    Bangers: 'Anton',
+    Pacifico: 'Anton',
+    Lobster: 'Anton',
+    Yellowtail: 'Anton',
+    'Kaushan Script': 'Anton',
+    'Space Grotesk': 'Anton',
+    Outfit: 'Anton',
+    'League Spartan': 'Anton',
+    'Permanent Marker': 'Anton',
+    Shrikhand: 'Anton',
+    'Lilita One': 'Anton',
+    'Alfa Slab One': 'Anton',
+    Rajdhani: 'Teko',
+    'Chakra Petch': 'Iceland',
+    Wallpoet: 'Black Ops One',
+    VT323: 'VT323',
+    Michroma: 'Orbitron',
+    Audiowide: 'Audiowide',
+    Oxanium: 'Oxanium',
+    Aldrich: 'Iceland',
+  };
+
+  function numberFontFor(nameFont) {
+    return FONT_PAIRS[nameFont] || 'Anton';
+  }
+
   const api = {
     FONT_CATS: FONT_CATS,
     FONT_MAP: FONT_MAP,
+    FONT_PAIRS: FONT_PAIRS,
+    numberFontFor: numberFontFor,
     BANNED_FOR_VINYL: BANNED_FOR_VINYL,
     KIT_NAME_FONTS: KIT_NAME_FONTS,
     KIT_NUM_FONTS: KIT_NUM_FONTS,

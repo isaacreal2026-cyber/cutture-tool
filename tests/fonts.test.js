@@ -76,6 +76,7 @@ check('no fake CSS family Montserrat Black', unique.indexOf('Montserrat Black') 
 check('Montserrat paints as weight 900', F.fabricProps('Montserrat').fontFamily === 'Montserrat' &&
   F.fabricProps('Montserrat').fontWeight === '900');
 check('Anton fabric family is Anton', F.fabricProps('Anton').fontFamily === 'Anton');
+check('name fonts carry a number pair', F.numberFontFor('Bebas Neue') === 'Anton' && F.numberFontFor('Oswald') === 'Tourney');
 
 const googleNames = F.googleFamilyNames();
 const orphans = unique.filter(function (n) {

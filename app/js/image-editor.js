@@ -223,6 +223,28 @@
     r.readAsText(file);
   }
 
+  window.openImageEditorFromObject = function openImageEditorFromObject(obj) {
+    const o = obj || (canvas() && canvas().getActiveObject());
+    if (!o || !o.getElement) { showToast('Select a logo / image first', 'w'); return; }
+    const el = o.getElement();
+    const c = document.createElement('canvas');
+    c.width = el.naturalWidth || el.width || 1;
+    c.height = el.naturalHeight || el.height || 1;
+    c.getContext('2d').drawImage(el, 0, 0);
+    const url = c.toDataURL('image/png');
+    const im = new Image();
+    im.onload = function () {
+      state.name = 'logo';
+      state.fullUrl = url;
+      loadPixelsFromImage(im, 'original');
+      const modal = $('img-modal');
+      if (modal) modal.classList.remove('h');
+      setStatus('Editing sheet logo · remove BG / crop, then Place');
+      drawPreview();
+    };
+    im.src = url;
+  };
+
   window.handleUpload = function handleUpload(ev) {
     const f = ev.target.files && ev.target.files[0];
     if (!f) return;
