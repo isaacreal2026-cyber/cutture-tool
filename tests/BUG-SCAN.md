@@ -28,6 +28,11 @@ Updated 2026-08-12.
 11. **Map zoom** — wheel / + / − zoom the whole sheet (text, logo, grid) around the cursor like a map. Rulers lock to the same world centimetres. Zoom never changes plotter millimetres (10 cm on the sheet is still 100 mm in DXF/HPGL at 200% or 50%).
 12. Transform X/Y/W/H use the same mm/cm/in as the rulers.
 13. Ctrl+D / Ctrl+G shortcuts restored. Broken export-option markup cleaned.
+14. **Logo Place on canvas** no longer bails on `window.FC` (logos actually land on the sheet).
+15. SVG import guards empty files. SVG **arc** commands are sampled for cut paths.
+16. Stretched circles export as ellipses, not fake circles.
+17. Desktop save uses base64 (no giant Array.from crash on big PNGs).
+18. Linux is no longer labelled “Windows desktop”. New document resets zoom.
 
 ## Still later
 
