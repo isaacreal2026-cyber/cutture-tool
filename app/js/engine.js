@@ -257,6 +257,14 @@
     const mapPts = (pts) => simplify(pts, eps * pxPerMmLocal).map((p) => ({ x: toMmX(p.x), y: toMmY(p.y) }));
 
     if (obj.isGuide) return [];
+    if (obj.cutCommands && obj.cutCommands.length) {
+      const m = obj.calcTransformMatrix ? obj.calcTransformMatrix() : [1, 0, 0, 1, 0, 0];
+      return pathCommandsToPolylines(obj.cutCommands, m, 6).map((loop) => ({
+        type: 'polyline',
+        closed: loop.closed,
+        points: mapPts(loop.points),
+      })).filter((e) => e.points.length >= 2);
+    }
     if (obj.type === 'circle') {
       const c = obj.getCenterPoint ? obj.getCenterPoint() : { x: obj.left, y: obj.top };
       const r = (obj.radius || 0) * (obj.scaleX || 1);

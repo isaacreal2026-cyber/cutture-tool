@@ -8,6 +8,7 @@
 <script src="vendor/fabric.min.js"></script>
 <script src="vendor/imagetracer.js"></script>
 <script src="js/engine.js"></script>
+<script src="js/image-prep.js"></script>
 <!-- Optional online fonts. Non-blocking so a missing network never freezes the Windows app. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -309,6 +310,9 @@ select.pi{cursor:pointer}
   color:var(--t2);margin-bottom:10px;line-height:1.6;
 }
 .exprev strong{color:var(--acc)}
+#img-modal .modal{max-width:560px}
+#img-prev{display:block;max-width:100%;height:auto;margin:0 auto 10px;border:1px solid var(--bdr);border-radius:var(--rs);cursor:crosshair;background:#fff}
+#img-stat{font-size:11px;color:var(--t3);margin:6px 0 10px;line-height:1.4}
 </style>
 </head>
 <body>
@@ -652,6 +656,8 @@ select.pi{cursor:pointer}
         <span class="plbl">Options</span>
         <div style="display:flex;flex-direction:column;gap:5px">
           <label style="font-size:11px;display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="exp-opt" checked> Optimize node count</label>
+          <label style="font-size:11px;display:flex;="display:flex;flex-direction:column;gap:5px">
+          <label style="font-size:11px;display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="exp-opt" checked> Optimize node count</label>
           <label style="font-size:11px;display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="exp-outline" checked> Convert text to cut outlines</label>
           <label style="font-size:11px;display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="exp-scale"> Add scale markers</label>
           <label style="font-size:11px;display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="exp-wm" checked disabled> aisac watermark (required)</label>
@@ -661,6 +667,55 @@ select.pi{cursor:pointer}
     <div class="mact">
       <button class="btn bs" onclick="closeModal('exp-modal')">Cancel</button>
       <button class="btn bp" onclick="doExport()">⬇ Export Now</button>
+    </div>
+  </div>
+</div>
+
+<!-- IMAGE PREP (import only — does not change the studio chrome) -->
+<div class="mover h" id="img-modal">
+  <div class="modal">
+    <div class="mttl">🖼 Edit image / logo</div>
+    <canvas id="img-prev" width="420" height="280"></canvas>
+    <div id="img-stat">Import a logo, remove the background, then place it on the sheet.</div>
+    <div class="sec">
+      <div class="prow">
+        <span class="plbl">Quality</span>
+        <select class="pi" id="img-qual">
+          <option value="original" selected>Original (full pixels)</option>
+          <option value="print">Print (max 4000px)</option>
+          <option value="high">High (max 2400px)</option>
+          <option value="web">Web (max 1200px)</option>
+        </select>
+      </div>
+      <div class="prow">
+        <span class="plbl">Tolerance</span>
+        <input type="range" class="pi" id="img-tol" min="8" max="90" value="30">
+        <span class="vbdg">bg</span>
+      </div>
+      <div class="prow">
+        <span class="plbl">Feather</span>
+        <input type="range" class="pi" id="img-feather" min="0" max="4" value="0">
+        <span class="vbdg">px</span>
+      </div>
+      <div class="prow" style="align-items:flex-start">
+        <span class="plbl">Treat</span>
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <label style="font-size:11px;display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="img-holes" checked> Punch interior holes (O, A)</label>
+          <label style="font-size:11px;display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="img-speck" checked> Despeckle dust</label>
+          <label style="font-size:11px;display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="img-force"> Re-key even if PNG has alpha</label>
+        </div>
+      </div>
+      <div class="bgrp" style="flex-wrap:wrap;margin-top:6px">
+        <button class="btn bp bsm" id="img-auto">Auto remove BG</button>
+        <button class="btn bs bsm" id="img-pick">Pick BG</button>
+        <button class="btn bs bsm" id="img-crop">Crop</button>
+        <button class="btn bs bsm" id="img-crop-ok">Apply crop</button>
+        <button class="btn bs bsm" id="img-reset">Reset</button>
+      </div>
+    </div>
+    <div class="mact">
+      <button class="btn bs" onclick="closeModal('img-modal')">Cancel</button>
+      <button class="btn bp" id="img-place">Place on canvas</button>
     </div>
   </div>
 </div>
@@ -1744,8 +1799,7 @@ function initKeys(){
       switch(e.key){
         case 'z':e.preventDefault();undo();break;
         case 'y':e.preventDefault();redo();break;
-        case 'd':e.preventDefault();duplicateSelected();break;
-        case 'g':e.preventDefault();groupSelected();break;
+        case 'd':e.preventDefault();duplicateentDefault();groupSelected();break;
         case 's':e.preventDefault(); if(e.shiftKey) saveProject(); else showExportModal(); break;
         case 'o':e.preventDefault(); openProject(); break;
         case 'n':e.preventDefault(); newDocument(); break;
@@ -1802,7 +1856,7 @@ function projectPayload(){
   return JSON.stringify({
     app:'CutterStudio Pro', version:1,
     docW:S.docW, docH:S.docH, zoom:S.zoom,
-    canvas: FC.toJSON(['objType','isGuide'])
+    canvas: FC.toJSON(['objType','isGuide','cutCommands','bgRemoved'])
   });
 }
 
@@ -1852,5 +1906,6 @@ async function openProject(){
 switchTab('props');
 </script>
 <script src="js/cut-app.js"></script>
+<script src="js/image-editor.js"></script>
 </body>
 </html>
