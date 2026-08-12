@@ -20,6 +20,27 @@
     });
   }
 
+  function fillPressSelect() {
+    const sel = $('kit-press');
+    if (!sel || sel._filled || !K.PRESS) return;
+    sel._filled = true;
+    Object.keys(K.PRESS).forEach(function (id) {
+      const o = document.createElement('option');
+      o.value = id;
+      o.textContent = K.PRESS[id].label;
+      sel.appendChild(o);
+    });
+    sel.addEventListener('change', showPress);
+    showPress();
+  }
+
+  function showPress() {
+    const el = $('kit-press-out');
+    if (!el || !K.formatPress) return;
+    const id = ($('kit-press') || {}).value || 'htv_pu';
+    el.textContent = K.formatPress(id);
+  }
+
   function currentParts() {
     return {
       name: !$('kit-skip-name') || $('kit-skip-name').checked,
@@ -252,6 +273,7 @@
 
   document.addEventListener('DOMContentLoaded', function () {
     fillPresetSelect();
+    fillPressSelect();
     if (typeof CutterFonts !== 'undefined' && CutterFonts.fillKitFontSelects) {
       CutterFonts.fillKitFontSelects();
     }

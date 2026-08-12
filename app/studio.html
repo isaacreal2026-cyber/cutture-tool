@@ -314,29 +314,6 @@ select.pi{cursor:pointer}
 .exprev strong{color:var(--acc)}
 #img-modal .modal{max-width:560px}
 #img-prev{display:block;max-width:100%;height:auto;margin:0 auto 10px;border:1px solid var(--bdr);border-radius:var(--rs);cursor:crosshair;background:#fff}
-#img-stat{font-size:11px;color:var(--t3);margin:6px 0 10pvar(--bdrb);color:var(--t3);font-family:monospace}
-
-/* SHAPE GRID */
-.sgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:4px}
-.sshape{padding:7px 4px;border-radius:var(--rs);background:var(--bg3);border:1px solid var(--bdr);font-size:20px;text-align:center;cursor:pointer;transition:all .15s}
-.sshape:hover{border-color:var(--acc);background:var(--accg)}
-
-/* CUT-LINE ANIMATION */
-@keyframes dashA{to{stroke-dashoffset:-20}}
-.cutanim{stroke-dasharray:6 4;animation:dashA .4s linear infinite}
-
-/* EXPORT WATERMARK (visible on exported SVG only, hidden canvas copy) */
-#export-wm-layer{display:none}
-
-/* ===== EXPORT PREVIEW ===== */
-.exprev{
-  background:var(--bg3);border:1px solid var(--bdrb);
-  border-radius:var(--r);padding:10px;font-size:11px;
-  color:var(--t2);margin-bottom:10px;line-height:1.6;
-}
-.exprev strong{color:var(--acc)}
-#img-modal .modal{max-width:560px}
-#img-prev{display:block;max-width:100%;height:auto;margin:0 auto 10px;border:1px solid var(--bdr);border-radius:var(--rs);cursor:crosshair;background:#fff}
 #img-stat{font-size:11px;color:var(--t3);margin:6px 0 10px;line-height:1.4}
 </style>
 </head>
@@ -806,6 +783,15 @@ select.pi{cursor:pointer}
           <option value="EUR">EUR</option>
           <option value="GBP">GBP</option>
         </select>
+      </div>
+      <div class="prow">
+        <span class="plbl">Press</span>
+        <select class="pi" id="kit-press"></select>
+      </div>
+      <div class="exprev" id="kit-press-out">Pick a material for temp / time / peel.</div>
+      <div class="prow">
+        <span class="plbl">Baud</span>
+        <input type="number" class="pi" id="kit-baud" value="9600" min="1200" max="115200" step="300">
       </div>
       <textarea class="pi" id="kit-roster" rows="8" placeholder="OTIENO,10&#10;KAMAU,7&#10;WANJIKU,4" style="width:100%;min-height:140px;resize:vertical;margin-bottom:8px"></textarea>
       <div id="kit-stat" style="font-size:11px;color:var(--t3);margin-bottom:8px">Paste a roster or load a coach CSV.</div>
@@ -1284,7 +1270,8 @@ function updateLayers(){
     const idx=FC.getObjects().indexOf(o);
     const isSel=o===act;
     const icon=o.type==='text'?'𝐓':o.type==='image'?'🖼':o.type==='path'?'✎':o.type==='group'?'⊞':'◻';
-    const name=(o.text||(o.objType||o.type)+'').substring(0,18);
+    const raw=(o.text||(o.objType||o.type)+'').substring(0,18);
+    const name=(typeof CutterEngine!=='undefined'&&CutterEngine.escapeHtml)?CutterEngine.escapeHtml(raw):raw.replace(/[<>&]/g,'');
     const d=document.createElement('div');
     d.className='li'+(isSel?' sel':'');
     d.innerHTML=`<div class="lthumb">${icon}</div><div class="lname">${name}</div><div style="display:flex;gap:3px"><button class="lbtn" onclick="toggleVis(${idx})" title="Toggle visibility">👁</button><button class="lbtn" onclick="lockObj(${idx})" title="Lock">🔒</button></div>`;
@@ -1336,7 +1323,8 @@ function separateColors(){
   Object.entries(cm).forEach(([color,count])=>{
     const d=document.createElement('div');
     d.className='li';
-    d.innerHTML=`<div class="lthumb" style="background:${color};border:1px solid #444"></div><div class="lname">${color}</div><div style="font-size:10px;color:var(--t3)">${count} obj</div>`;
+    const hex=/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(String(color))?color:'#000000';
+    d.innerHTML=`<div class="lthumb" style="background:${hex};border:1px solid #444"></div><div class="lname">${hex}</div><div style="font-size:10px;color:var(--t3)">${count} obj</div>`;
     cl.appendChild(d);
   });
   showToast(`${Object.keys(cm).length} color layers separated`,'s');
@@ -1854,7 +1842,8 @@ function showToast(msg,type='s'){
   const t=document.createElement('div');
   t.className='toast '+type;
   const icons={s:'✓',w:'⚠',e:'✕'};
-  t.innerHTML=`<span style="color:${type==='s'?'var(--ok)':type==='w'?'var(--warn)':'var(--err)'}">${icons[type]||'•'}</span><span>${msg}</span>`;
+  const safe=(typeof CutterEngine!=='undefined'&&CutterEngine.escapeHtml)?CutterEngine.escapeHtml(msg):String(msg).replace(/[<>&]/g,'');
+  t.innerHTML=`<span style="color:${type==='s'?'var(--ok)':type==='w'?'var(--warn)':'var(--err)'}">${icons[type]||'•'}</span><span>${safe}</span>`;
   tc.appendChild(t);
   setTimeout(()=>{t.style.transition='opacity .3s';t.style.opacity='0';setTimeout(()=>t.remove(),350);},3200);
 }

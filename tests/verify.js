@@ -71,6 +71,7 @@ ok('unit selector mm/cm/in', html.includes('id="unit-in"') && html.includes('Mil
 ok('desktop cut-app layer loaded', html.includes('js/cut-app.js'));
 ok('Electron enables Web Serial for plotter send',
   fs.readFileSync(path.join(ROOT, 'electron', 'main.js'), 'utf8').includes("enableBlinkFeatures: 'Serial'"));
+ok('press recipe + baud in kit modal', html.includes('id="kit-press"') && html.includes('id="kit-baud"'));
 ok('map-zoom geometry layer loaded', html.includes('js/map-zoom.js'));
 ok('team kit production wired', html.includes('js/kit-prod.js') && html.includes('id="kit-modal"') && html.includes('mirrorForHtv'));
 ok('CSV + quote + plotter send wired', html.includes('id="kit-csv"') && html.includes('kit-export-colors') && html.includes('kit-send') && html.includes('quote-out'));

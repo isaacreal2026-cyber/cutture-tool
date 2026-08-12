@@ -179,8 +179,44 @@
     };
   }
 
+  const PRESS = {
+    htv_pu: {
+      id: 'htv_pu', label: 'PU HTV (Siser-class)',
+      tempC: 150, timeS: 15, peel: 'hot / warm',
+      note: 'Mirror. Cotton and poly blend. Medium pressure.',
+    },
+    htv_glitter: {
+      id: 'htv_glitter', label: 'Glitter HTV',
+      tempC: 160, timeS: 20, peel: 'cold',
+      note: 'Mirror. Extra pressure. Weed before press.',
+    },
+    flock: {
+      id: 'flock', label: 'Flock',
+      tempC: 160, timeS: 20, peel: 'warm',
+      note: 'Mirror. Soft pile — do not over-press.',
+    },
+    printable: {
+      id: 'printable', label: 'Printable HTV / DTF film',
+      tempC: 160, timeS: 15, peel: 'cold',
+      note: 'Do not mirror if the print already faces the shirt.',
+    },
+    sign: {
+      id: 'sign', label: 'Sign vinyl (no press)',
+      tempC: 0, timeS: 0, peel: 'n/a',
+      note: 'Adhesive vinyl. No heat. Apply with squeegee.',
+    },
+  };
+
+  function formatPress(id) {
+    const p = PRESS[id] || PRESS.htv_pu;
+    if (!p.tempC) return p.label + ' — ' + p.note;
+    return p.tempC + '°C · ' + p.timeS + 's · peel ' + p.peel + ' · ' + p.note;
+  }
+
   return {
     PRESETS: PRESETS,
+    PRESS: PRESS,
+    formatPress: formatPress,
     parseRoster: parseRoster,
     parseRosterCsv: parseRosterCsv,
     parseCsvLine: parseCsvLine,

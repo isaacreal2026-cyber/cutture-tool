@@ -1,6 +1,7 @@
 const { app, BrowserWindow, Menu, dialog, ipcMain, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const CutterEngine = require('../app/js/engine.js');
 
 if (process.platform === 'win32') {
   app.setAppUserModelId('com.aisac.cutterstudio');
@@ -37,17 +38,18 @@ function createWindow() {
   });
 
   mainWindow.webContents.session.setPermissionCheckHandler((_wc, permission) => {
-    if (permission === 'serial') return true;
-    return true;
+    return permission === 'serial';
   });
-  mainWindow.webContents.session.setDevicePermissionHandler(() => true);
+  mainWindow.webContents.session.setDevicePermissionHandler((details) => {
+    return !!(details && details.deviceType === 'serial');
+  });
   mainWindow.loadFile(path.join(__dirname, '..', 'app', 'studio.html'));
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
     mainWindow.focus();
   });
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    shell.openExternal(url);
+    if (/^https?:\/\//i.test(url)) shell.openExternal(url);
     return { action: 'deny' };
   });
   buildMenu();
@@ -155,7 +157,7 @@ ipcMain.handle('save-jobs', async (_evt, files) => {
   if (canceled || !filePaths[0]) return { ok: false };
   const dir = filePaths[0];
   list.forEach((f) => {
-    const name = String((f && f.name) || 'job.bin').replace(/[\\/]/g, '_');
+    const name = CutterEngine.safeJobName((f && f.name) || 'job.bin');
     const buf = f.b64 != null ? Buffer.from(f.b64, 'base64') : Buffer.from(f.text || '', 'utf8');
     fs.writeFileSync(path.join(dir, name), buf);
   });

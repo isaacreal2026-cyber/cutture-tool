@@ -34,7 +34,13 @@ Updated 2026-08-12.
 17. Desktop save uses base64 (no giant Array.from crash on big PNGs).
 18. Linux is no longer labelled “Windows desktop”. New document resets zoom.
 
+19. Grouped artwork now composes the parent matrix when children have no `.group`.
+20. Layer names / toasts escape HTML. Colour chips only accept `#hex`.
+21. Electron grants **serial only**; job filenames cannot be `..`.
+22. DXF/HPGL drop NaN entities instead of writing `NaN` into the plot file.
+23. Kit press recipe + baud field.
+
 ## Still later
 
-- USB / serial send to a physical plotter (files: DXF / HPGL / Cut-SVG).
+- Native USB where Web Serial is blocked.
 - Photo / hair matting is not a cloud portrait model.

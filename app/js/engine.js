@@ -123,7 +123,7 @@
       '0', 'ENDSEC',
       '0', 'SECTION', '2', 'ENTITIES',
     ]);
-    list.forEach((ent) => {
+    list.filter(entityIsFinite).forEach((ent) => {
       if (ent.type === 'circle') {
         out += nlJoin([
           '0', 'CIRCLE', '8', 'CUT_LAYER',
@@ -160,7 +160,7 @@
       'VS' + (o.velocity || 20) + ';',
     ];
     function u(mm) { return Math.round(Number(mm) * HPGL_PER_MM); }
-    list.forEach((ent) => {
+    list.filter(entityIsFinite).forEach((ent) => {
       if (ent.type === 'circle') {
         const steps = Math.max(24, Math.round((ent.r * 2 * Math.PI) / 0.4));
         const pts = [];
@@ -188,6 +188,53 @@
       x: m[0] * x + m[2] * y + m[4],
       y: m[1] * x + m[3] * y + m[5],
     };
+  }
+
+  function multiplyMatrices(a, b) {
+    const A = a && a.length === 6 ? a : [1, 0, 0, 1, 0, 0];
+    const B = b && b.length === 6 ? b : [1, 0, 0, 1, 0, 0];
+    return [
+      A[0] * B[0] + A[2] * B[1],
+      A[1] * B[0] + A[3] * B[1],
+      A[0] * B[2] + A[2] * B[3],
+      A[1] * B[2] + A[3] * B[3],
+      A[0] * B[4] + A[2] * B[5] + A[4],
+      A[1] * B[4] + A[3] * B[5] + A[5],
+    ];
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+    });
+  }
+
+  function safeJobName(name) {
+    let n = String(name == null ? '' : name).replace(/[^A-Za-z0-9._-]+/g, '_');
+    n = n.replace(/^\.+/, '').replace(/^_+/, '');
+    if (!n || n === '.' || n === '..') n = 'job';
+    if (!/\.(plt|hpgl|dxf|svg|json|png|txt|bin)$/i.test(n)) n += '.bin';
+    return n.slice(0, 96);
+  }
+
+  function finiteNum(n) { return typeof n === 'number' && Number.isFinite(n); }
+
+  function entityIsFinite(ent) {
+    if (!ent) return false;
+    if (ent.type === 'circle') return finiteNum(ent.cx) && finiteNum(ent.cy) && finiteNum(ent.r) && ent.r > 0;
+    const pts = ent.points || [];
+    return pts.length >= 2 && pts.every(function (p) { return p && finiteNum(p.x) && finiteNum(p.y); });
+  }
+
+  function objectMatrix(obj, parentMatrix) {
+    if (parentMatrix && !obj.group) {
+      const own = obj.calcOwnMatrix
+        ? obj.calcOwnMatrix()
+        : (obj.calcTransformMatrix ? obj.calcTransformMatrix() : [1, 0, 0, 1, 0, 0]);
+      return multiplyMatrices(parentMatrix, own);
+    }
+    if (obj.calcTransformMatrix) return obj.calcTransformMatrix();
+    return [1, 0, 0, 1, 0, 0];
   }
 
   function sampleQuad(a, c, b, n) {
@@ -326,8 +373,9 @@
     const mapPts = (pts) => simplify(pts, eps * pxPerMmLocal).map((p) => ({ x: toMmX(p.x), y: toMmY(p.y) }));
 
     if (obj.isGuide) return [];
+    const m = objectMatrix(obj, o.parentMatrix);
+
     if (obj.cutCommands && obj.cutCommands.length) {
-      const m = obj.calcTransformMatrix ? obj.calcTransformMatrix() : [1, 0, 0, 1, 0, 0];
       return pathCommandsToPolylines(obj.cutCommands, m, 6).map((loop) => ({
         type: 'polyline',
         closed: loop.closed,
@@ -335,10 +383,10 @@
       })).filter((e) => e.points.length >= 2);
     }
     if (obj.type === 'circle') {
-      const c = obj.getCenterPoint ? obj.getCenterPoint() : { x: obj.left, y: obj.top };
+      const c0 = obj.getCenterPoint ? obj.getCenterPoint() : { x: obj.left || 0, y: obj.top || 0 };
+      const c = o.parentMatrix && !obj.group ? transformPoint(c0.x, c0.y, o.parentMatrix) : c0;
       const sx = obj.scaleX || 1, sy = obj.scaleY || 1;
       if (Math.abs(sx - sy) > 0.02) {
-        const m = obj.calcTransformMatrix ? obj.calcTransformMatrix() : [1, 0, 0, 1, c.x, c.y];
         const pts = [];
         const steps = 32;
         for (let i = 0; i < steps; i++) {
@@ -351,7 +399,6 @@
       return [{ type: 'circle', cx: toMmX(c.x), cy: toMmY(c.y), r: r / pxPerMmLocal }];
     }
     if (obj.path && Array.isArray(obj.path)) {
-      const m = obj.calcTransformMatrix ? obj.calcTransformMatrix() : [1, 0, 0, 1, 0, 0];
       return pathCommandsToPolylines(obj.path, m, 8).map((loop) => ({
         type: 'polyline',
         closed: loop.closed,
@@ -359,14 +406,12 @@
       })).filter((e) => e.points.length >= 2);
     }
     if (obj.type === 'line' && obj.x1 != null) {
-      const m = obj.calcTransformMatrix ? obj.calcTransformMatrix() : [1, 0, 0, 1, 0, 0];
       const a = transformPoint(obj.x1, obj.y1, m);
       const b = transformPoint(obj.x2, obj.y2, m);
       return [{ type: 'polyline', closed: false, points: [{ x: toMmX(a.x), y: toMmY(a.y) }, { x: toMmX(b.x), y: toMmY(b.y) }] }];
     }
     const local = localShapePoints(obj);
     if (local && local.length) {
-      const m = obj.calcTransformMatrix ? obj.calcTransformMatrix() : [1, 0, 0, 1, 0, 0];
       const pts = local.map((p) => transformPoint(p.x, p.y, m));
       return [{ type: 'polyline', closed: true, points: mapPts(pts) }];
     }
@@ -387,8 +432,11 @@
     const out = [];
     (objects || []).forEach((obj) => {
       if (obj.type === 'group' && obj._objects) {
+        const gm = obj.calcTransformMatrix ? obj.calcTransformMatrix() : [1, 0, 0, 1, 0, 0];
         obj._objects.forEach((child) => {
-          out.push.apply(out, fabricObjectToEntities(child, opts));
+          const childOpts = Object.assign({}, opts);
+          if (!child.group) childOpts.parentMatrix = gm;
+          out.push.apply(out, fabricObjectToEntities(child, childOpts));
         });
         return;
       }
@@ -474,5 +522,10 @@
     scrollFromWorld,
     screenPerUnit,
     projectMeta,
+    multiplyMatrices,
+    escapeHtml,
+    safeJobName,
+    entityIsFinite,
+    objectMatrix,
   };
 });

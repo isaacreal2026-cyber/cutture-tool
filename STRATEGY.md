@@ -62,7 +62,7 @@ Kit modal: **name font** (default Bebas Neue) and **number font** (default Anton
 7. **Send to plotter** — Web Serial when the OS exposes the cutter; otherwise a colour-job folder.
 
 ### Next
-8. Press recipe card (temp / time / peel) per material.
+8. ~~Press recipe card~~ **Shipped** — Kit → Press (PU / glitter / flock / printable / sign vinyl).
 9. Native USB drivers for Graphtec / Roland / Chinese plotters where Web Serial is blocked.
 
 ### Later (still no UI rebuild)
