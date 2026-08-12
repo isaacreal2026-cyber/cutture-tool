@@ -56,9 +56,9 @@ check('Google URL does not pull thin scripts', href.indexOf('Allura') < 0 &&
   href.indexOf('Gloria') < 0 && href.indexOf('Dancing+Script') < 0 &&
   href.indexOf('Playfair') < 0 && href.indexOf('Cormorant') < 0);
 
-const html = fs.readFileSync(path.join(__dirname, '..', 'app', 'index.html'), 'utf8');
-check('index loads fonts.js before picker', html.indexOf('js/fonts.js') < html.indexOf('buildFontDropdown'));
-check('index Google link matches library families', html.indexOf('family=Tourney') >= 0 &&
+const html = fs.readFileSync(path.join(__dirname, '..', 'app', 'studio.html'), 'utf8');
+check('studio loads fonts.js before picker', html.indexOf('js/fonts.js') < html.indexOf('buildFontDropdown'));
+check('studio Google link matches library families', html.indexOf('family=Tourney') >= 0 &&
   html.indexOf('family=Share+Tech+Mono') >= 0 && html.indexOf('family=Black+Ops+One') >= 0);
 check('thin faces not in HTML picker', html.indexOf('Gloria Hallelujah') < 0 &&
   html.indexOf('Allura') < 0 && html.indexOf('Philosopher') < 0 &&

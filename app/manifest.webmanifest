@@ -1,0 +1,14 @@
+{
+  "name": "CutterStudio Pro",
+  "short_name": "CutterStudio",
+  "description": "Vinyl cutter studio for jersey names, HTV tees and school kits. Offline Windows and Linux.",
+  "start_url": "/studio.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0c0c10",
+  "theme_color": "#7c5cfc",
+  "lang": "en",
+  "icons": [
+    { "src": "icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

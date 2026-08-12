@@ -40,7 +40,7 @@ function createWindow() {
     return true;
   });
   mainWindow.webContents.session.setDevicePermissionHandler(() => true);
-  mainWindow.loadFile(path.join(__dirname, '..', 'app', 'index.html'));
+  mainWindow.loadFile(path.join(__dirname, '..', 'app', 'studio.html'));
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
     mainWindow.focus();

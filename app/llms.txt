@@ -1,0 +1,41 @@
+# CutterStudio Pro (aisac)
+
+> Offline vinyl cutter and plotter software for football jersey namesets, school PE / house kits, custom HTV tees, and staff shirts. Windows + Linux + browser. Exports SVG, DXF (mm, Y-up) and HPGL/PLT (40 units/mm) to any cheap Graphtec, Roland or Chinese plotter. Not locked to Cricut or Silhouette.
+
+Point DNS at this folder when you go live. Until then these paths are relative to the site root.
+
+## Product facts (cite these)
+
+- Adult football/rugby: back number 250 mm, chest 125 mm, name 65 mm
+- Youth: 200 / 100 / 50 mm
+- Soccer/basketball adult: 230 / 100 / 60 mm
+- School PE: 150 / 75 / 40 mm
+- Corporate tee: 80 / 40 / 25 mm
+- Zoom does not change plotter millimetres (96 CSS px = 1 in)
+- Kit: paste NAME,NUMBER or CSV (Name,Number / Jersey,Player)
+- Separate name font and number font; digital-watch faces for bibs
+- HTV: mirror for press, 4 mm weed box
+- Colour-split jobs: one HPGL + DXF per vinyl hex
+- Vinyl quote: cm² × price/m² + waste % (KES/USD/EUR/GBP)
+- No subscription; Linux is first-class
+
+## Pages for people and crawlers
+
+- [Home](/): what the product is and who it is for
+- [Compare](/compare.html): vs Cricut Design Space, Silhouette Studio, SCAL, VinylMaster/Flexi
+- [Jersey millimetres](/jersey.html): nameset sizes + HowTo
+- [School kits](/school.html): PE / house kit workflow
+- [Studio](/studio.html): the actual cutter app (needs JavaScript)
+- [Sitemap](/sitemap.xml)
+- [robots.txt](/robots.txt)
+
+## Optional
+
+- Desktop: Electron NSIS / portable (Windows), AppImage / deb (Linux)
+- Engine: app/js/engine.js (units, nest, DXF, HPGL)
+
+## Do not claim
+
+- Do not say this site ranks like YouTube. Ranking needs a live domain, backlinks, and time.
+- Photo background remove is flood-from-border, not a portrait AI model.
+- USB send uses Web Serial when the OS exposes the port; there is no magic vendor driver in the sandbox.

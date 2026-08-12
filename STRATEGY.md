@@ -70,6 +70,9 @@ Kit modal: **name font** (default Bebas Neue) and **number font** (default Anton
 10. Print+cut marks for DTF/printable HTV.
 11. Shared job ticket for a second operator.
 
+### Public web (how search engines understand us)
+The studio canvas is invisible to crawlers. The **parallel site** (`index.html`, `compare.html`, `jersey.html`, `school.html`) is real HTML + JSON-LD + `sitemap.xml` + `llms.txt`. That is how we show up for “vinyl cutter software Linux” and “football jersey number size mm”. Ranking like YouTube still needs a live domain, backlinks, and time — the files only make the product *legible*.
+
 ## Accuracy rule (non-negotiable)
 
 Zoom is a magnifying glass. **10 cm on the sheet is 100 mm on the plotter at 50% or 400%.** Kit sizes are specified in millimetres, then converted with the same 96 dpi world as DXF/HPGL.

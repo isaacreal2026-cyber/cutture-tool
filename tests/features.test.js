@@ -108,14 +108,14 @@ const cut = E.objectsToEntities([fakeLogo], { pxPerMm: E.PX_PER_MM, heightPx: 40
 check('feature: logo cut is not a rectangle-only fallback', cut.length >= 1 && cut[0].points && cut[0].points.length >= 3);
 
 // --- App wiring ---
-const html = fs.readFileSync(path.join(__dirname, '..', 'app', 'index.html'), 'utf8');
+const html = fs.readFileSync(path.join(__dirname, '..', 'app', 'studio.html'), 'utf8');
 check('feature: import editor modal wired', html.includes('id="img-modal"') && html.includes('img-place'));
 check('feature: map-zoom script last', html.lastIndexOf('map-zoom.js') > html.lastIndexOf('image-editor.js'));
 check('feature: HPGL in export list', html.includes('value="hpgl"'));
 check('feature: units selector', html.includes('id="unit-in"'));
 check('feature: no duplicate exp-opt', (html.match(/id="exp-opt"/g) || []).length === 1);
 check('feature: Ctrl+D not corrupted', !html.includes('duplicateentDefault') && html.includes('duplicateSelected()'));
-check('feature: desktop save uses base64', fs.readFileSync(path.join(__dirname, '..', 'app', 'index.html'), 'utf8').includes('readAsDataURL'));
+check('feature: desktop save uses base64', html.includes('readAsDataURL'));
 check('feature: logo place does not require window.FC', !fs.readFileSync(path.join(__dirname, '..', 'app', 'js', 'image-editor.js'), 'utf8').includes('!window.FC'));
 
 if (failed) {

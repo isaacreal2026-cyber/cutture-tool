@@ -19,7 +19,7 @@ npm test
 npm run preview
 ```
 
-Open the preview URL and use the studio immediately.
+The preview root is the **public site** (search-engine pages). Open **Open studio** for the cutter. Desktop Electron still loads `app/studio.html` directly.
 
 ## Desktop (Windows + Linux)
 
@@ -41,12 +41,15 @@ Outputs land in `dist/`.
 ## Layout
 
 ```
-app/                 studio UI (offline: local Fabric + ImageTracer)
-  js/engine.js       units, nest, DXF, HPGL, path math
-  js/fonts.js        jersey / HTV / digital-watch type library
-  js/cut-app.js      desktop cutter layer
-electron/            Windows + Linux shell
-tests/               readiness + engine accuracy
+app/                 public site + studio
+  index.html         crawlable home (Google / Bing / AI)
+  studio.html        cutter app (Electron + Open studio)
+  compare.html       vs Cricut / Silhouette / VinylMaster
+  jersey.html        nameset millimetres
+  sitemap.xml, robots.txt, llms.txt
+  js/engine.js       units, nest, DXF, HPGL
+electron/            Windows + Linux shell (loads studio.html)
+tests/               readiness + engine + SEO
 ```
 
 Type faces are shop-floor only (Tourney, Anton, Black Ops One, Share Tech Mono / Iceland digital watch…). Thin scripts that snap on cheap HTV were removed. Kit uses a **name font** and a **number font**.

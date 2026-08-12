@@ -1,0 +1,13 @@
+# CutterStudio Pro — allow every major crawler to read the public pages.
+User-agent: *
+Allow: /
+Allow: /llms.txt
+Allow: /sitemap.xml
+Allow: /og.png
+Allow: /icon.png
+
+# Studio is a heavy canvas app. Index the URL, but the facts live on HTML pages.
+Allow: /studio.html
+
+Sitemap: https://cutterstudio.pro/sitemap.xml
+Sitemap: /sitemap.xml

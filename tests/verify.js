@@ -7,7 +7,7 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
-const htmlPath = path.join(ROOT, 'app', 'index.html');
+const htmlPath = path.join(ROOT, 'app', 'studio.html');
 const fabricPath = path.join(ROOT, 'app', 'vendor', 'fabric.min.js');
 const origPath = path.join(ROOT, 'htlm');
 
@@ -22,7 +22,11 @@ const html = fs.readFileSync(htmlPath, 'utf8');
 const orig = fs.existsSync(origPath) ? fs.readFileSync(origPath, 'utf8') : '';
 
 // --- structure ---
-ok('index.html exists', html.includes('<!DOCTYPE html>'));
+ok('studio.html exists', html.includes('<!DOCTYPE html>'));
+ok('public landing is separate from studio', (() => {
+  const home = fs.readFileSync(path.join(ROOT, 'app', 'index.html'), 'utf8');
+  return home.includes('<h1>') && !home.includes('id="main-canvas"') && html.includes('id="main-canvas"');
+})());
 ok('local Fabric.js (no CDN)', html.includes('vendor/fabric.min.js') && !html.includes('cdnjs.cloudflare.com'));
 ok('fabric.min.js vendored', fs.existsSync(fabricPath) && fs.statSync(fabricPath).size > 100000,
   fs.existsSync(fabricPath) ? `${fs.statSync(fabricPath).size} bytes` : 'missing');
