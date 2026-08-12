@@ -62,6 +62,7 @@ ok('HPGL export in UI', html.includes('hpgl') && html.includes('exp-outline'));
 ok('unit selector mm/cm/in', html.includes('id="unit-in"') && html.includes('Millimetres'));
 ok('desktop cut-app layer loaded', html.includes('js/cut-app.js'));
 ok('map-zoom geometry layer loaded', html.includes('js/map-zoom.js'));
+ok('team kit production wired', html.includes('js/kit-prod.js') && html.includes('id="kit-modal"') && html.includes('mirrorForHtv'));
 ok('image prep + editor loaded', html.includes('js/image-prep.js') && html.includes('js/image-editor.js') && html.includes('id="img-modal"'));
 ok('cutCommands persisted on save', html.includes('cutCommands'));
 

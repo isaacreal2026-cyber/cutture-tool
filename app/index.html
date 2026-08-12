@@ -335,6 +335,7 @@ select.pi{cursor:pointer}
   <button class="tbtn" id="wbtn" onclick="toggleWireframe()">◎ Cut Preview</button>
   <button class="tbtn" id="thbtn" onclick="toggleTheme()">☀ Light</button>
   <div class="sp"></div>
+  <button class="tbtn" onclick="showKitModal()">⚽ Kit</button>
   <button class="tbtn" onclick="autoNest()">⬛ Auto-Nest</button>
   <button class="tbtn pri" onclick="showExportModal()">⬇ Export</button>
 </div>
@@ -601,6 +602,13 @@ select.pi{cursor:pointer}
           <button class="btn bp bw" onclick="autoNest()">⬛ Auto-Nest Shapes</button>
         </div>
         <div class="sec">
+          <div class="sttl">👕 HTV / heat transfer</div>
+          <div class="bgrp" style="flex-wrap:wrap">
+            <button class="btn bs bsm" onclick="mirrorForHtv()">Mirror for press</button>
+            <button class="btn bs bsm" onclick="addWeedBox()">Weed box</button>
+          </div>
+        </div>
+        <div class="sec">
           <div class="sttl">🎨 Vinyl Color Layers</div>
           <div id="color-layers"></div>
           <button class="btn bs bsm bw" onclick="separateColors()" style="margin-top:6px">Separate by Color</button>
@@ -714,6 +722,34 @@ select.pi{cursor:pointer}
     <div class="mact">
       <button class="btn bs" onclick="closeModal('img-modal')">Cancel</button>
       <button class="btn bp" id="img-place">Place on canvas</button>
+    </div>
+  </div>
+</div>
+
+<!-- TEAM KIT (production — existing modal chrome) -->
+<div class="mover h" id="kit-modal">
+  <div class="modal" style="max-width:520px">
+    <div class="mttl">⚽ Team Kit — names & numbers</div>
+    <div class="exprev">Paste one player per line: <strong>NAME,NUMBER</strong> or <strong>10 OTIENO</strong>. Pieces land at real jersey millimetres, then nest on the sheet.</div>
+    <div class="sec">
+      <div class="prow">
+        <span class="plbl">Preset</span>
+        <select class="pi" id="kit-preset"></select>
+      </div>
+      <div class="prow" style="align-items:flex-start">
+        <span class="plbl">Pieces</span>
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <label style="font-size:11px;display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="kit-skip-name" checked> Name on back</label>
+          <label style="font-size:11px;display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="kit-skip-front" checked> Front / chest number</label>
+          <label style="font-size:11px;display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="kit-skip-back" checked> Back number</label>
+        </div>
+      </div>
+      <textarea class="pi" id="kit-roster" rows="8" placeholder="OTIENO,10&#10;KAMAU,7&#10;WANJIKU,4" style="width:100%;min-height:140px;resize:vertical;margin-bottom:8px"></textarea>
+      <div id="kit-stat" style="font-size:11px;color:var(--t3);margin-bottom:8px">Paste a roster to preview piece count.</div>
+    </div>
+    <div class="mact">
+      <button class="btn bs" onclick="closeModal('kit-modal')">Cancel</button>
+      <button class="btn bp" id="kit-place">Place kit on sheet</button>
     </div>
   </div>
 </div>
@@ -1915,6 +1951,8 @@ switchTab('props');
 </script>
 <script src="js/cut-app.js"></script>
 <script src="js/image-editor.js"></script>
+<script src="js/kit-prod.js"></script>
+<script src="js/kit-ui.js"></script>
 <script src="js/map-zoom.js"></script>
 </body>
 </html>
