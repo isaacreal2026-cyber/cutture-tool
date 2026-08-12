@@ -34,6 +34,48 @@
     showPress();
   }
 
+  function fillPlotterSelect() {
+    const sel = $('kit-plotter');
+    if (!sel || sel._filled || typeof ShopReady === 'undefined') return;
+    sel._filled = true;
+    Object.keys(ShopReady.PLOTTERS).forEach(function (id) {
+      const o = document.createElement('option');
+      o.value = id;
+      o.textContent = ShopReady.PLOTTERS[id].label;
+      sel.appendChild(o);
+    });
+    const saved = ShopReady.loadSettings();
+    sel.value = saved.plotter || 'generic';
+    applyPlotterProfile(sel.value, false);
+    sel.addEventListener('change', function () {
+      applyPlotterProfile(sel.value, true);
+    });
+  }
+
+  function applyPlotterProfile(id, persist) {
+    if (typeof ShopReady === 'undefined') return;
+    const p = ShopReady.plotter(id);
+    const baud = $('kit-baud');
+    const vs = $('kit-vs');
+    const fs = $('kit-fs');
+    if (baud) baud.value = p.baud;
+    if (vs) vs.value = p.velocity;
+    if (fs) fs.value = p.force;
+    if (persist) ShopReady.saveSettings({ plotter: p.id });
+  }
+
+  function currentHpglOpts() {
+    const id = (($('kit-plotter') || {}).value) || 'generic';
+    if (typeof ShopReady === 'undefined') {
+      return { velocity: parseInt(($('kit-vs') || {}).value, 10) || 20 };
+    }
+    return ShopReady.hpglOpts(id, {
+      velocity: parseInt(($('kit-vs') || {}).value, 10),
+      force: parseInt(($('kit-fs') || {}).value, 10),
+      baud: parseInt(($('kit-baud') || {}).value, 10),
+    });
+  }
+
   function showPress() {
     const el = $('kit-press-out');
     if (!el || !K.formatPress) return;
@@ -51,7 +93,11 @@
 
   function currentQuote() {
     const players = K.parseRoster(($('kit-roster') || {}).value || '');
-    const pieces = K.buildKit(players, ($('kit-preset') || {}).value, currentParts());
+    let pieces = K.buildKit(players, ($('kit-preset') || {}).value, currentParts());
+    const copies = (typeof ShopReady !== 'undefined')
+      ? ShopReady.clampCopies(($('kit-copies') || $('sheet-copies') || {}).value)
+      : 1;
+    if (copies > 1 && typeof ShopReady !== 'undefined') pieces = ShopReady.expandCopies(pieces, copies);
     const cm2 = K.vinylAreaCm2(pieces);
     const q = K.quoteVinyl(cm2, {
       pricePerM2: parseFloat(($('kit-price') || {}).value) || 0,
@@ -81,7 +127,11 @@
     const players = K.parseRoster(($('kit-roster') || {}).value || '');
     if (!players.length) { showToast('Paste a roster first (NAME,NUMBER)', 'w'); return; }
     const preset = ($('kit-preset') || {}).value || 'football_adult';
-    const pieces = K.buildKit(players, preset, currentParts());
+    let pieces = K.buildKit(players, preset, currentParts());
+    const copies = (typeof ShopReady !== 'undefined')
+      ? ShopReady.clampCopies(($('kit-copies') || $('sheet-copies') || {}).value)
+      : 1;
+    if (copies > 1 && typeof ShopReady !== 'undefined') pieces = ShopReady.expandCopies(pieces, copies);
     if (!pieces.length) { showToast('Nothing to place — tick name / front / back', 'w'); return; }
 
     const nameFont = (($('kit-name-font') || {}).value) || (S && S.curFont && S.curFont.f) || 'Bebas Neue';
@@ -175,6 +225,7 @@
   window.showKitModal = function showKitModal() {
     fillPresetSelect();
     fillPressSelect();
+    fillPlotterSelect();
     if (typeof CutterFonts !== 'undefined' && CutterFonts.fillKitFontSelects) {
       CutterFonts.fillKitFontSelects();
     }
@@ -218,7 +269,7 @@
       return {
         color: job.color,
         count: objs.length,
-        hpgl: E.hpgl(ents, { velocity: 20 }),
+        hpgl: E.hpgl(ents, currentHpglOpts()),
         dxf: E.dxf(ents),
         nameHpgl: 'kit-' + slug + '.plt',
         nameDxf: 'kit-' + slug + '.dxf',
@@ -255,7 +306,8 @@
     if (navigator.serial && navigator.serial.requestPort) {
       try {
         const port = await navigator.serial.requestPort();
-        await port.open({ baudRate: parseInt(($('kit-baud') || {}).value, 10) || 9600 });
+        const opts = currentHpglOpts();
+        await port.open({ baudRate: opts.baud || parseInt(($('kit-baud') || {}).value, 10) || 9600 });
         const writer = port.writable.getWriter();
         const enc = new TextEncoder();
         for (let i = 0; i < jobs.length; i++) {
@@ -277,12 +329,13 @@
   document.addEventListener('DOMContentLoaded', function () {
     fillPresetSelect();
     fillPressSelect();
+    fillPlotterSelect();
     if (typeof CutterFonts !== 'undefined' && CutterFonts.fillKitFontSelects) {
       CutterFonts.fillKitFontSelects();
     }
     const roster = $('kit-roster');
     if (roster) roster.addEventListener('input', previewCount);
-    ['kit-preset', 'kit-skip-name', 'kit-skip-front', 'kit-skip-back', 'kit-price', 'kit-waste', 'kit-ccy'].forEach(function (id) {
+    ['kit-preset', 'kit-skip-name', 'kit-skip-front', 'kit-skip-back', 'kit-price', 'kit-waste', 'kit-ccy', 'kit-copies'].forEach(function (id) {
       const el = $(id);
       if (el) el.addEventListener('input', previewCount);
       if (el) el.addEventListener('change', previewCount);

@@ -40,7 +40,14 @@ Updated 2026-08-12.
 22. DXF/HPGL drop NaN entities instead of writing `NaN` into the plot file.
 23. Kit press recipe + baud field.
 
+24. **Plotter profiles + VS/FS** — Kit plotter select writes speed/force into HPGL.
+25. **Autosave** — dirty sheet snapshot; restore prompt after a crash. Huge logos skipped.
+26. **Job queue + gang copies + shop type + vinyl rolls** on the existing Sheet / Kit panels.
+27. **Right-click** removes a custom Quick Shape.
+
 ## Still later
 
 - Native USB where Web Serial is blocked.
 - Photo / hair matting is not a cloud portrait model.
+- Bundled `.woff2` + OpenType glyph outlines.
+- True-shape nest beyond 90°.

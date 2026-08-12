@@ -220,7 +220,7 @@
 
   function hpgl(entities, opts) {
     const o = opts || {};
-    const list = entities || [];
+    const list = o.sort === false ? (entities || []) : sortEntitiesForCut(entities || []);
     const lines = [
       'IN;',
       'SP1;',
@@ -247,8 +247,36 @@
       if (ent.closed) rest.push(pts[0]);
       lines.push('PD' + rest.map((p) => u(p.x) + ',' + u(p.y)).join(',') + ';');
     });
+    if (o.force != null && Number.isFinite(Number(o.force)) && Number(o.force) > 0) {
+      lines.splice(4, 0, 'FS' + Math.round(Number(o.force)) + ';');
+    }
+    if (o.pen != null && Number.isFinite(Number(o.pen))) {
+      lines[1] = 'SP' + Math.round(Number(o.pen)) + ';';
+    }
     lines.push('PU;', 'SP0;', 'IN;');
     return lines.join('\n') + '\n';
+  }
+
+  function entitySortKey(ent) {
+    if (!ent) return { x: 0, y: 0 };
+    if (ent.type === 'circle') {
+      return { x: Number(ent.cx) - Number(ent.r) || 0, y: Number(ent.cy) - Number(ent.r) || 0 };
+    }
+    const pts = ent.points || [];
+    let x = Infinity, y = Infinity;
+    pts.forEach(function (p) {
+      if (p && Number.isFinite(p.x) && p.x < x) x = p.x;
+      if (p && Number.isFinite(p.y) && p.y < y) y = p.y;
+    });
+    return { x: Number.isFinite(x) ? x : 0, y: Number.isFinite(y) ? y : 0 };
+  }
+
+  function sortEntitiesForCut(entities) {
+    return (entities || []).slice().sort(function (a, b) {
+      const A = entitySortKey(a), B = entitySortKey(b);
+      if (Math.abs(A.x - B.x) > 0.5) return A.x - B.x;
+      return A.y - B.y;
+    });
   }
 
   function transformPoint(x, y, m) {
@@ -545,7 +573,7 @@
   }
 
   function projectMeta() {
-    return { app: 'CutterStudio Pro', version: 2, platforms: ['win32', 'linux'] };
+    return { app: 'CutterStudio Pro', version: 3, platforms: ['win32', 'linux'] };
   }
 
   function worldFromScroll(scroll, zoom, pad) {
@@ -582,6 +610,7 @@
     simplify,
     dxf,
     hpgl,
+    sortEntitiesForCut,
     pathCommandsToPolylines,
     fabricObjectToEntities,
     objectsToEntities,

@@ -65,11 +65,17 @@
   };
 
   window.genHPGL = function genHPGL() {
-    return E.hpgl(collectCutEntities(), { velocity: 20 });
+    const opts = (typeof ShopReady !== 'undefined')
+      ? ShopReady.hpglOpts((document.getElementById('kit-plotter') || {}).value, {
+        velocity: parseInt((document.getElementById('kit-vs') || {}).value, 10),
+        force: parseInt((document.getElementById('kit-fs') || {}).value, 10),
+      })
+      : { velocity: 20 };
+    return E.hpgl(collectCutEntities(), opts);
   };
 
   window.setPreset = function setPreset(p) {
-    const cm = { tshirt: [30, 40], a4: [21, 29.7], a3: [29.7, 42], a5: [14.8, 21], sticker: [25, 30] };
+    const cm = { tshirt: [30, 40], a4: [21, 29.7], a3: [29.7, 42], a5: [14.8, 21], sticker: [25, 30], roll300: [30, 50], roll500: [50, 70], roll610: [61, 80] };
     if (!cm[p]) return;
     const u = E.UNITS[S.unit];
     document.getElementById('dw-in').value = E.fromMm(cm[p][0] * 10, S.unit).toFixed(u.decimals);
@@ -287,7 +293,7 @@
   };
 
   function snapshotCanvas() {
-    return FC.toJSON(['objType', 'isGuide', 'cutCommands', 'bgRemoved']);
+    return FC.toJSON(['objType', 'isGuide', 'cutCommands', 'bgRemoved', 'curveMode', 'curveAmount', 'curveSource', 'kitPlayer']);
   }
 
   function restoreCanvas(snap) {
@@ -357,9 +363,11 @@
   const prevPayload = window.projectPayload;
   window.projectPayload = function projectPayload() {
     const base = JSON.parse(prevPayload());
-    return JSON.stringify(Object.assign(base, E.projectMeta(), {
-      unit: S.unit, docW: S.docW, docH: S.docH, version: 2,
-    }));
+    const extra = { unit: S.unit, docW: S.docW, docH: S.docH, version: 3 };
+    extra.roster = (document.getElementById('kit-roster') || {}).value || '';
+    if (typeof ShopReady !== 'undefined') extra.shop = ShopReady.loadSettings();
+    if (typeof CutterEdit !== 'undefined' && CutterEdit.loadShapes) extra.quickShapes = CutterEdit.loadShapes();
+    return JSON.stringify(Object.assign(base, E.projectMeta(), extra));
   };
 
   const prevLoad = window.loadProjectJSON;
@@ -370,6 +378,14 @@
     const sel = document.getElementById('unit-in');
     if (sel) sel.value = S.unit;
     setUnitBadges();
+    if (data.roster && document.getElementById('kit-roster')) {
+      document.getElementById('kit-roster').value = data.roster;
+    }
+    if (data.shop && typeof ShopReady !== 'undefined') ShopReady.saveSettings(data.shop);
+    if (data.quickShapes && typeof CutterEdit !== 'undefined' && CutterEdit.saveShapes) {
+      CutterEdit.saveShapes(data.quickShapes);
+      if (CutterEdit.renderCustomShapes) CutterEdit.renderCustomShapes();
+    }
     prevLoad(JSON.stringify(data));
   };
 

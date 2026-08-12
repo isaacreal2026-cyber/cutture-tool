@@ -36,6 +36,8 @@ const mem = { _d: {}, getItem: function (k) { return this._d[k] || null; }, setI
 E.saveShapes([{ name: 'crest', svg: '<svg/>' }], mem);
 const loaded = E.loadShapes(mem);
 check('custom shapes persist', loaded.length === 1 && loaded[0].name === 'crest');
+E.saveShapes([{ name: 'a' }, { name: 'b' }], mem);
+check('removeShape drops a tile', E.removeShape(0, mem).length === 1 && E.loadShapes(mem)[0].name === 'b');
 
 const html = fs.readFileSync(path.join(__dirname, '..', 'app', 'studio.html'), 'utf8');
 check('Edit opens modal not toast', html.includes('showEditModal()') && html.includes('id="edit-modal"'));

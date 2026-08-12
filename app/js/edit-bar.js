@@ -81,6 +81,14 @@
     return list;
   }
 
+  function removeShape(index, store) {
+    const list = loadShapes(store);
+    const i = Number(index);
+    if (!Number.isFinite(i) || i < 0 || i >= list.length) return list;
+    list.splice(i, 1);
+    return saveShapes(list, store);
+  }
+
   function isTextObj(o) {
     return o && (o.type === 'text' || o.type === 'i-text' || o.objType === 'text' || o.objType === 'text-curve' || o.objType === 'kit-name' || o.objType === 'kit-back' || o.objType === 'kit-front');
   }
@@ -122,7 +130,7 @@
   }
 
   if (typeof window === 'undefined') {
-    root.CutterEdit = { curveLayout: curveLayout, loadShapes: loadShapes, saveShapes: saveShapes, SHAPE_KEY: SHAPE_KEY };
+    root.CutterEdit = { curveLayout: curveLayout, loadShapes: loadShapes, saveShapes: saveShapes, removeShape: removeShape, SHAPE_KEY: SHAPE_KEY };
     if (typeof module === 'object' && module.exports) module.exports = root.CutterEdit;
     return;
   }
@@ -245,6 +253,13 @@
         d.textContent = '';
       } else d.textContent = sh.icon || '★';
       d.addEventListener('click', function () { placeCustomShape(sh); });
+      d.addEventListener('contextmenu', function (ev) {
+        ev.preventDefault();
+        if (!window.confirm('Remove “' + (sh.name || 'shape') + '” from Quick Shapes?')) return;
+        removeShape(i);
+        renderCustomShapes();
+        showToast('Quick shape removed', 's');
+      });
       host.appendChild(d);
     });
   }

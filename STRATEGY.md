@@ -66,6 +66,9 @@ Kit modal: **name font** (default Bebas Neue) and **number font** (default Anton
 8b. ~~Reg marks / rotate nest / job ticket / CSV size~~ **Shipped**.
 9. Native USB drivers for Graphtec / Roland / Chinese plotters where Web Serial is blocked.
 
+### Production floor (1.2.0)
+Plotter **VS/FS profiles**, vinyl **roll widths**, **shop type** defaults, **gang copies**, **autosave**, **job queue**. See `PRODUCTION.md`. Native USB and bundled fonts are still later.
+
 ### Later (still no UI rebuild)
 9. True-shape nest with rotation.
 10. Print+cut marks for DTF/printable HTV.

@@ -53,3 +53,5 @@ tests/               readiness + engine + SEO
 ```
 
 Type faces are shop-floor only (Tourney, Anton, Black Ops One, Share Tech Mono / Iceland digital watch…). Thin scripts that snap on cheap HTV were removed. Kit uses a **name font** and a **number font**.
+
+Shop-floor extras (no subscription): plotter profiles (Graphtec / Roland / Chinese), vinyl roll widths, gang copies, autosave, today’s job queue. See `PRODUCTION.md`.

@@ -24,6 +24,17 @@ Research date: 2026-08-12. Existing studio chrome, engine API, and Kit modal sta
 8. **Job ticket** — second-operator slip (press, quote, colours, sign-off).
 9. **CSV Size column** — youth / adult / PE per row; `buildKit` uses `player.preset` when set.
 
+## Shipped (production floor, 1.2.0)
+
+10. **Plotter profiles** — Graphtec / Roland / Chinese / generic write `VS` + optional `FS`.
+11. **Vinyl rolls** — 300 / 380 / 500 / 610 mm sheet presets.
+12. **Shop type** — first-run + Sheet tab (jersey / school / corporate defaults).
+13. **Gang copies** — Kit/Sheet copies, then nest.
+14. **Autosave** — local snapshot + restore prompt; huge logos skipped.
+15. **Job queue** — today’s jobs on this PC.
+16. **Project v3** — roster + shop + quick shapes in the `.json`.
+17. **Cut order** — left-to-right before HPGL.
+
 ## Next (still no chrome rebuild)
 
 | # | Add | How (open-closed) |
@@ -34,8 +45,9 @@ Research date: 2026-08-12. Existing studio chrome, engine API, and Kit modal sta
 
 ## Later
 
-- CSV size column → youth/adult preset per row.
+- True-shape nest with arbitrary rotation.
 - Hair/photo matting (not claimed as 100%).
-- Shared shop queue.
+- Shared shop queue across two PCs.
+- Camera registration on top of existing L-marks.
 
 Each step is a new module or a new optional argument. No deprecations of current exports.

@@ -524,6 +524,7 @@ select.pi{cursor:pointer}
           <div class="sgrid" id="custom-shapes"></div>
           <input type="file" id="shape-up" accept="image/*,.svg" style="display:none">
           <button class="btn bs bw bsm" onclick="saveSelectionToQuickShapes()" style="margin-top:6px">Save selection to Quick Shapes</button>
+          <div class="exprev" style="margin-top:6px">Right-click a saved tile to remove it.</div>
         </div>
 
         <!-- COLOR PALETTE -->
@@ -581,6 +582,9 @@ select.pi{cursor:pointer}
               <option value="a3">A3 (29.7×42cm)</option>
               <option value="a5">A5 (14.8×21cm)</option>
               <option value="sticker">Sticker Sheet (25×30cm)</option>
+              <option value="roll300">Vinyl roll 300 mm</option>
+              <option value="roll500">Vinyl roll 500 mm</option>
+              <option value="roll610">Vinyl roll 610 mm (24")</option>
               <option value="custom">Custom…</option>
             </select>
           </div>
@@ -608,6 +612,26 @@ select.pi{cursor:pointer}
         <div class="scard"><div class="scttl">Objects</div><div class="scval" id="oc">0</div><div class="scsub">Design elements</div></div>
         <div class="scard"><div class="scttl">Cut Nodes</div><div class="scval" id="nc">0</div><div class="scsub">Optimized for plotter speed</div></div>
         <div class="scard"><div class="scttl">Vinyl quote</div><div class="scval" id="quote-out">—</div><div class="scsub" id="quote-sub">Set price in Kit</div></div>
+        <div class="sec">
+          <div class="sttl">🏪 Shop floor</div>
+          <div class="prow">
+            <span class="plbl">Shop</span>
+            <select class="pi" id="shop-type"></select>
+          </div>
+          <div class="prow">
+            <span class="plbl">Roll</span>
+            <select class="pi" id="vinyl-roll"></select>
+          </div>
+          <div class="prow">
+            <span class="plbl">Copies</span>
+            <input type="number" class="pi" id="sheet-copies" value="1" min="1" max="50">
+          </div>
+          <div class="bgrp" style="flex-wrap:wrap">
+            <button class="btn bs bsm" onclick="gangCopiesOnSheet()">Gang copies + nest</button>
+            <button class="btn bs bsm" onclick="queueCurrentJob()">Queue job</button>
+            <button class="btn bs bsm" onclick="showJobQueue()">Today's jobs</button>
+          </div>
+        </div>
         <div class="sec">
           <div class="sttl">⬛ Nesting</div>
           <div class="prow"><span class="plbl">Margin</span><input type="number" class="pi" id="nm-in" value="3" min="0" max="30"><span class="vbdg">mm</span></div>
@@ -639,6 +663,7 @@ select.pi{cursor:pointer}
 <!-- STATUS BAR -->
 <div id="sbar">
   <span><div class="sdot"></div> Ready · <span id="s-plat">browser</span></span>
+  <span id="s-auto">Autosave off</span>
   <span id="s-cur">X: 0.0cm  Y: 0.0cm</span>
   <span id="s-sel">No selection</span>
   <span id="s-zoom">Zoom: 100%</span>
@@ -804,8 +829,22 @@ select.pi{cursor:pointer}
       </div>
       <div class="exprev" id="kit-press-out">Pick a material for temp / time / peel.</div>
       <div class="prow">
+        <span class="plbl">Plotter</span>
+        <select class="pi" id="kit-plotter"></select>
+      </div>
+      <div class="prow">
+        <span class="plbl">Speed</span>
+        <input type="number" class="pi" id="kit-vs" value="20" min="1" max="80">
+        <span class="plbl" style="width:auto;margin:0 4px">Force</span>
+        <input type="number" class="pi" id="kit-fs" value="20" min="0" max="80">
+      </div>
+      <div class="prow">
         <span class="plbl">Baud</span>
         <input type="number" class="pi" id="kit-baud" value="9600" min="1200" max="115200" step="300">
+      </div>
+      <div class="prow">
+        <span class="plbl">Copies</span>
+        <input type="number" class="pi" id="kit-copies" value="1" min="1" max="50">
       </div>
       <textarea class="pi" id="kit-roster" rows="8" placeholder="OTIENO,10&#10;KAMAU,7&#10;WANJIKU,4" style="width:100%;min-height:140px;resize:vertical;margin-bottom:8px"></textarea>
       <div id="kit-stat" style="font-size:11px;color:var(--t3);margin-bottom:8px">Paste a roster or load a coach CSV.</div>
@@ -883,6 +922,31 @@ select.pi{cursor:pointer}
     </div>
     <div class="mact">
       <button class="btn bs" onclick="closeModal('edit-modal')">Close</button>
+    </div>
+  </div>
+</div>
+<!-- FIRST-RUN SHOP TYPE -->
+<div class="mover h" id="shop-modal">
+  <div class="modal">
+    <div class="mttl">What does this shop cut?</div>
+    <div class="exprev">Sets jersey millimetres, vinyl roll width, and quote defaults. Change later on the Sheet tab.</div>
+    <div class="prow">
+      <span class="plbl">Shop</span>
+      <select class="pi" id="first-shop"></select>
+    </div>
+    <div class="mact">
+      <button class="btn bp" onclick="confirmShopType()">Use these defaults</button>
+    </div>
+  </div>
+</div>
+<!-- TODAY'S JOB QUEUE -->
+<div class="mover h" id="queue-modal">
+  <div class="modal">
+    <div class="mttl">Today's jobs</div>
+    <pre id="queue-body" class="exprev" style="white-space:pre-wrap;font-family:monospace">No jobs in today's queue.</pre>
+    <div class="mact">
+      <button class="btn bs" id="queue-clear">Clear queue</button>
+      <button class="btn bs" onclick="closeModal('queue-modal')">Close</button>
     </div>
   </div>
 </div>
@@ -1570,7 +1634,7 @@ function onMM(opt){
 // ================================================================
 function saveH(){
   if(!FC || histBusy) return;
-  const j=JSON.stringify(FC.toJSON(['objType','isGuide','cutCommands','bgRemoved']));
+    const j=JSON.stringify(FC.toJSON(['objType','isGuide','cutCommands','bgRemoved','curveMode','curveAmount','curveSource','kitPlayer']));
   if(undoStack.length && undoStack[undoStack.length-1]===j) return;
   undoStack.push(j);
   if(undoStack.length>40)undoStack.shift();
@@ -1956,7 +2020,7 @@ function projectPayload(){
   return JSON.stringify({
     app:'CutterStudio Pro', version:1,
     docW:S.docW, docH:S.docH, zoom:S.zoom,
-    canvas: FC.toJSON(['objType','isGuide','cutCommands','bgRemoved'])
+    canvas: FC.toJSON(['objType','isGuide','cutCommands','bgRemoved','curveMode','curveAmount','curveSource','kitPlayer'])
   });
 }
 
@@ -2011,6 +2075,7 @@ switchTab('props');
 <script src="js/kit-ui.js"></script>
 <script src="js/edit-bar.js"></script>
 <script src="js/shop-floor.js"></script>
+<script src="js/shop-ready.js"></script>
 <script src="js/map-zoom.js"></script>
 </body>
 </html>
