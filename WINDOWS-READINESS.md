@@ -1,9 +1,8 @@
 # CutterStudio Pro — frontend test & Windows readiness
 
-**Verdict: the original `htlm` file would NOT run 100% as a Windows app.**
-The copy in `app/` is the version that can be packaged. It is **desktop-ready for design + export**, not a turnkey cutter driver.
+**Status (2026-08-12):** Windows **and Linux** desktop targets are in place. The studio now uses a shared millimetre engine (DXF / HPGL / units / nest) and ImageTracer for closed contours + text outlines.
 
-Date tested: 2026-08-12
+Original `htlm` is still the prototype dump. Ship `app/` + `electron/`.
 
 ---
 

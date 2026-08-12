@@ -1,41 +1,49 @@
 # CutterStudio Pro (aisac)
 
-Vinyl-cutter design studio. The original single file is `htlm`. The **Windows-ready app** lives in `app/`.
+Vinyl cutter / plotter studio for **Windows** and **Linux**.
+
+Accurate sheet units (mm / cm / in at 96 CSS dpi), contour tracing, and machine exports:
+
+| Format | Use |
+|---|---|
+| Cut-SVG | Plotter paths, fills stripped, optional text outlines |
+| DXF | CAD / cutters, millimetres, Y-up |
+| HPGL / PLT | Vinyl plotters (40 units per mm) |
+| PNG | Proof with watermark |
+| `.json` project | Save / open designs |
 
 ## Run in a browser
 
 ```bash
+npm test
 npm run preview
-# or: python3 -m http.server 8080 --directory app
 ```
 
-Open `http://localhost:8080`.
+Open the preview URL and use the studio immediately.
 
-## Run as a desktop app
+## Desktop (Windows + Linux)
 
 ```bash
 npm install
 npm start
 ```
 
-## Build a Windows installer / portable exe
-
-On Windows (or CI with Electron Builder):
+### Build installers
 
 ```bash
-npm install
-npm run pack:win
+npm run pack:win     # NSIS + portable .exe
+npm run pack:linux   # AppImage + .deb
+npm run pack         # both
 ```
 
-Outputs under `dist/`:
+Outputs land in `dist/`.
 
-- `CutterStudio-Pro-1.0.0-win-x64.exe` (NSIS)
-- portable build for USB / no-install use
+## Layout
 
-## Verify
-
-```bash
-npm test
 ```
-
-See `WINDOWS-READINESS.md` for the full test report and what is (and is not) plotter-complete.
+app/                 studio UI (offline: local Fabric + ImageTracer)
+  js/engine.js       units, nest, DXF, HPGL, path math
+  js/cut-app.js      desktop cutter layer
+electron/            Windows + Linux shell
+tests/               readiness + engine accuracy
+```

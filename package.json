@@ -1,8 +1,8 @@
 {
   "name": "cutterstudio-pro",
   "productName": "CutterStudio Pro",
-  "version": "1.0.0",
-  "description": "aisac vinyl cutter & plotter studio — Windows desktop app",
+  "version": "1.1.0",
+  "description": "aisac vinyl cutter & plotter studio for Windows and Linux",
   "main": "electron/main.js",
   "author": "aisac",
   "license": "UNLICENSED",
@@ -10,8 +10,10 @@
     "start": "electron .",
     "dev": "electron .",
     "preview": "python3 -m http.server 8080 --bind 0.0.0.0 --directory app",
-    "test": "node tests/verify.js",
-    "pack:win": "electron-builder --win --x64"
+    "test": "node tests/verify.js && node tests/engine.test.js",
+    "pack:win": "electron-builder --win --x64",
+    "pack:linux": "electron-builder --linux --x64",
+    "pack": "electron-builder --win --linux --x64"
   },
   "devDependencies": {
     "electron": "^33.2.1",
@@ -23,17 +25,35 @@
     "files": [
       "app/**/*",
       "electron/**/*",
+      "build/icon.png",
       "package.json"
     ],
     "directories": {
-      "output": "dist"
+      "output": "dist",
+      "buildResources": "build"
     },
     "win": {
+      "icon": "build/icon.png",
       "target": [
         { "target": "nsis", "arch": ["x64"] },
         { "target": "portable", "arch": ["x64"] }
       ],
-      "artifactName": "CutterStudio-Pro-${version}-${os}-${arch}.${ext}"
+      "artifactName": "CutterStudio-Pro-${version}-windows-${arch}.${ext}"
+    },
+    "linux": {
+      "icon": "build/icon.png",
+      "category": "Graphics",
+      "maintainer": "aisac",
+      "desktop": {
+        "Name": "CutterStudio Pro",
+        "Comment": "Vinyl cutter and plotter studio",
+        "StartupWMClass": "cutterstudio-pro"
+      },
+      "target": [
+        { "target": "AppImage", "arch": ["x64"] },
+        { "target": "deb", "arch": ["x64"] }
+      ],
+      "artifactName": "CutterStudio-Pro-${version}-linux-${arch}.${ext}"
     },
     "nsis": {
       "oneClick": false,

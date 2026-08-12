@@ -6,6 +6,8 @@
 <title>CutterStudio Pro — aisac Vinyl Cutter & Plotter</title>
 <!-- Local Fabric.js 5.3.0 — required for offline Windows builds. CDN 5.3.1 is not a real npm release. -->
 <script src="vendor/fabric.min.js"></script>
+<script src="vendor/imagetracer.js"></script>
+<script src="js/engine.js"></script>
 <!-- Optional online fonts. Non-blocking so a missing network never freezes the Windows app. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -567,14 +569,22 @@ select.pi{cursor:pointer}
             </select>
           </div>
           <div class="prow">
+            <span class="plbl">Units</span>
+            <select class="pi" id="unit-in" onchange="setUnit(this.value)">
+              <option value="mm">Millimetres</option>
+              <option value="cm" selected>Centimetres</option>
+              <option value="in">Inches</option>
+            </select>
+          </div>
+          <div class="prow">
             <span class="plbl">Width</span>
-            <input type="number" class="pi" id="dw-in" value="30" min="1" max="200">
-            <span class="vbdg">cm</span>
+            <input type="number" class="pi" id="dw-in" value="30" min="0.1" max="2000" step="0.1">
+            <span class="vbdg" data-unit-badge>cm</span>
           </div>
           <div class="prow">
             <span class="plbl">Height</span>
-            <input type="number" class="pi" id="dh-in" value="40" min="1" max="200">
-            <span class="vbdg">cm</span>
+            <input type="number" class="pi" id="dh-in" value="40" min="0.1" max="2000" step="0.1">
+            <span class="vbdg" data-unit-badge>cm</span>
           </div>
           <button class="btn bs bw bsm" onclick="applyDocSize()">Apply Size</button>
         </div>
@@ -599,7 +609,7 @@ select.pi{cursor:pointer}
 
 <!-- STATUS BAR -->
 <div id="sbar">
-  <span><div class="sdot"></div> Ready · aisac</span>
+  <span><div class="sdot"></div> Ready · <span id="s-plat">browser</span></span>
   <span id="s-cur">X: 0.0cm  Y: 0.0cm</span>
   <span id="s-sel">No selection</span>
   <span id="s-zoom">Zoom: 100%</span>
@@ -626,7 +636,8 @@ select.pi{cursor:pointer}
           <option value="cut-svg" selected>Cut-SVG — Paths Only (Plotter)</option>
           <option value="svg">SVG — Full Design + Watermark</option>
           <option value="png">PNG — High-Res Image + Watermark</option>
-          <option value="dxf">DXF — CNC / Plotter Machine</option>
+          <option value="dxf">DXF — CAD / cutter (mm, Y-up)</option>
+          <option value="hpgl">HPGL / PLT — vinyl plotter</option>
         </select>
       </div>
       <div class="prow">
@@ -641,7 +652,8 @@ select.pi{cursor:pointer}
         <span class="plbl">Options</span>
         <div style="display:flex;flex-direction:column;gap:5px">
           <label style="font-size:11px;display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="exp-opt" checked> Optimize node count</label>
-          <label style="font-size:11px;display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="exp-scale"> Add cm scale markers</label>
+          <label style="font-size:11px;display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="exp-outline" checked> Convert text to cut outlines</label>
+          <label style="font-size:11px;display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="exp-scale"> Add scale markers</label>
           <label style="font-size:11px;display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="exp-wm" checked disabled> aisac watermark (required)</label>
         </div>
       </div>
@@ -1839,5 +1851,6 @@ async function openProject(){
 // ================================================================
 switchTab('props');
 </script>
+<script src="js/cut-app.js"></script>
 </body>
 </html>

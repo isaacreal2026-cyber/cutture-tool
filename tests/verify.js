@@ -52,10 +52,15 @@ ok('retina scaling enabled', html.includes('enableRetinaScaling'));
 ok('Electron main + preload exist',
   fs.existsSync(path.join(ROOT, 'electron', 'main.js')) &&
   fs.existsSync(path.join(ROOT, 'electron', 'preload.js')));
-ok('Windows package.json build target', (() => {
+ok('Windows + Linux package targets', (() => {
   const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
-  return pkg.build && pkg.build.win && pkg.main === 'electron/main.js';
+  return pkg.build && pkg.build.win && pkg.build.linux && pkg.main === 'electron/main.js';
 })());
+ok('shared cutter engine shipped', fs.existsSync(path.join(ROOT, 'app', 'js', 'engine.js')) && html.includes('js/engine.js'));
+ok('ImageTracer vendored for logo/text outlines', fs.existsSync(path.join(ROOT, 'app', 'vendor', 'imagetracer.js')) && html.includes('imagetracer.js'));
+ok('HPGL export in UI', html.includes('hpgl') && html.includes('exp-outline'));
+ok('unit selector mm/cm/in', html.includes('id="unit-in"') && html.includes('Millimetres'));
+ok('desktop cut-app layer loaded', html.includes('js/cut-app.js'));
 
 // original-file regression: these MUST have been broken in htlm
 if (orig) {

@@ -2,10 +2,17 @@ const { app, BrowserWindow, Menu, dialog, ipcMain, shell } = require('electron')
 const path = require('path');
 const fs = require('fs');
 
-// Windows taskbar grouping + toast identity
-app.setAppUserModelId('com.aisac.cutterstudio');
+if (process.platform === 'win32') {
+  app.setAppUserModelId('com.aisac.cutterstudio');
+}
 
 let mainWindow = null;
+let currentProjectPath = null;
+
+function iconPath() {
+  const p = path.join(__dirname, '..', 'build', 'icon.png');
+  return fs.existsSync(p) ? p : undefined;
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -15,6 +22,8 @@ function createWindow() {
     minHeight: 700,
     show: false,
     backgroundColor: '#0c0c10',
+    icon: iconPath(),
+    title: 'CutterStudio Pro',
     autoHideMenuBar: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -26,19 +35,15 @@ function createWindow() {
     },
   });
 
-  const index = path.join(__dirname, '..', 'app', 'index.html');
-  mainWindow.loadFile(index);
-
+  mainWindow.loadFile(path.join(__dirname, '..', 'app', 'index.html'));
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
     mainWindow.focus();
   });
-
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url);
     return { action: 'deny' };
   });
-
   buildMenu();
 }
 
@@ -53,7 +58,7 @@ function buildMenu() {
         { label: 'Open Project…', accelerator: 'CmdOrCtrl+O', click: () => send('menu:open') },
         { label: 'Save Project', accelerator: 'CmdOrCtrl+Shift+S', click: () => send('menu:save') },
         { type: 'separator' },
-        { label: 'Export…', accelerator: 'CmdOrCtrl+S', click: () => send('menu:export') },
+        { label: 'Export Cut File…', accelerator: 'CmdOrCtrl+S', click: () => send('menu:export') },
         { type: 'separator' },
         isMac ? { role: 'close' } : { role: 'quit' },
       ],
@@ -83,6 +88,22 @@ function buildMenu() {
         { role: 'togglefullscreen' },
       ],
     },
+    {
+      label: 'Help',
+      submenu: [
+        {
+          label: 'About CutterStudio Pro',
+          click: () => {
+            dialog.showMessageBox(mainWindow, {
+              type: 'info',
+              title: 'CutterStudio Pro',
+              message: 'CutterStudio Pro — aisac',
+              detail: 'Vinyl cutter / plotter studio for Windows and Linux.\nExport: Cut-SVG, DXF (mm), HPGL/PLT, PNG.',
+            });
+          },
+        },
+      ],
+    },
   ];
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
@@ -93,15 +114,27 @@ function send(channel) {
   }
 }
 
+function filtersFor(name) {
+  const ext = path.extname(name || '').replace('.', '').toLowerCase();
+  const map = {
+    json: [{ name: 'CutterStudio Project', extensions: ['json'] }],
+    svg: [{ name: 'SVG', extensions: ['svg'] }],
+    png: [{ name: 'PNG image', extensions: ['png'] }],
+    dxf: [{ name: 'DXF (CAD / cutter)', extensions: ['dxf'] }],
+    plt: [{ name: 'HPGL plot', extensions: ['plt', 'hpgl'] }],
+    hpgl: [{ name: 'HPGL plot', extensions: ['plt', 'hpgl'] }],
+  };
+  return map[ext] || [{ name: 'All files', extensions: ['*'] }];
+}
+
 ipcMain.handle('save-file', async (_evt, { name, bytes }) => {
   const { canceled, filePath } = await dialog.showSaveDialog(mainWindow, {
     defaultPath: name || 'export.bin',
-    filters: [
-      { name: 'All files', extensions: ['*'] },
-    ],
+    filters: filtersFor(name),
   });
   if (canceled || !filePath) return { ok: false };
   fs.writeFileSync(filePath, Buffer.from(bytes));
+  if ((name || '').endsWith('.json')) currentProjectPath = filePath;
   return { ok: true, filePath };
 });
 
@@ -109,17 +142,17 @@ ipcMain.handle('open-project', async () => {
   const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
     filters: [{ name: 'CutterStudio Project', extensions: ['json'] }],
     properties: ['openFile'],
+    defaultPath: currentProjectPath || undefined,
   });
   if (canceled || !filePaths[0]) return null;
+  currentProjectPath = filePaths[0];
   return fs.readFileSync(filePaths[0], 'utf8');
 });
 
 app.whenReady().then(createWindow);
-
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
-
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) createWindow();
 });
