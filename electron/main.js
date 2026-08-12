@@ -35,6 +35,11 @@ function createWindow() {
     },
   });
 
+  mainWindow.webContents.session.setPermissionCheckHandler((_wc, permission) => {
+    if (permission === 'serial') return true;
+    return true;
+  });
+  mainWindow.webContents.session.setDevicePermissionHandler(() => true);
   mainWindow.loadFile(path.join(__dirname, '..', 'app', 'index.html'));
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
@@ -137,6 +142,23 @@ ipcMain.handle('save-file', async (_evt, { name, b64, bytes }) => {
   fs.writeFileSync(filePath, buf);
   if ((name || '').endsWith('.json')) currentProjectPath = filePath;
   return { ok: true, filePath };
+});
+
+ipcMain.handle('save-jobs', async (_evt, files) => {
+  const list = Array.isArray(files) ? files : [];
+  if (!list.length) return { ok: false };
+  const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
+    title: 'Folder for colour-split cut jobs',
+    properties: ['openDirectory', 'createDirectory'],
+  });
+  if (canceled || !filePaths[0]) return { ok: false };
+  const dir = filePaths[0];
+  list.forEach((f) => {
+    const name = String((f && f.name) || 'job.bin').replace(/[\\/]/g, '_');
+    const buf = f.b64 != null ? Buffer.from(f.b64, 'base64') : Buffer.from(f.text || '', 'utf8');
+    fs.writeFileSync(path.join(dir, name), buf);
+  });
+  return { ok: true, dir: dir, count: list.length };
 });
 
 ipcMain.handle('open-project', async () => {

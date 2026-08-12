@@ -28,13 +28,27 @@
     };
   }
 
-  function previewCount() {
+  function currentQuote() {
     const players = K.parseRoster(($('kit-roster') || {}).value || '');
     const pieces = K.buildKit(players, ($('kit-preset') || {}).value, currentParts());
+    const cm2 = K.vinylAreaCm2(pieces);
+    const q = K.quoteVinyl(cm2, {
+      pricePerM2: parseFloat(($('kit-price') || {}).value) || 0,
+      wastePct: parseFloat(($('kit-waste') || {}).value) || 15,
+      currency: ($('kit-ccy') || {}).value || 'KES',
+    });
+    return { players: players, pieces: pieces, cm2: cm2, quote: q };
+  }
+
+  function previewCount() {
     const el = $('kit-stat');
     if (!el) return;
-    const cm2 = K.vinylAreaCm2(pieces);
-    el.textContent = players.length + ' players · ' + pieces.length + ' cut pieces · ~' + cm2.toFixed(0) + ' cm² vinyl';
+    const cur = currentQuote();
+    el.textContent = cur.players.length + ' players · ' + cur.pieces.length + ' pieces · ' + cur.quote.text;
+    const qel = $('quote-out');
+    if (qel) qel.textContent = cur.quote.total ? cur.quote.currency + ' ' + cur.quote.total.toFixed(2) : '—';
+    const qsub = $('quote-sub');
+    if (qsub) qsub.textContent = cur.quote.usedCm2 + ' cm² incl. waste';
   }
 
   function placeKit() {
@@ -138,15 +152,115 @@
     previewCount();
   };
 
+  window.loadRosterCsv = function loadRosterCsv(file) {
+    if (!file) return;
+    const r = new FileReader();
+    r.onload = function () {
+      const players = K.parseRosterCsv(String(r.result || ''));
+      const ta = $('kit-roster');
+      if (ta) {
+        ta.value = players.map(function (p) { return p.name + ',' + p.number; }).join('\n');
+      }
+      previewCount();
+      showToast(players.length + ' players loaded from CSV', players.length ? 's' : 'w');
+    };
+    r.readAsText(file);
+  };
+
+  function collectColorJobs() {
+    const fc = board();
+    if (!fc || typeof CutterEngine === 'undefined') return [];
+    const E = CutterEngine;
+    const items = fc.getObjects().filter(function (o) { return !o.isGuide && o.objType !== 'weed-box'; }).map(function (o) {
+      return { fill: o.fill, objType: o.objType, ref: o };
+    });
+    return K.splitJobsByColor(items).map(function (job) {
+      const objs = job.items.map(function (it) { return it.ref; });
+      const ents = E.objectsToEntities(objs, {
+        pxPerMm: E.PX_PER_MM,
+        heightPx: fc.height,
+        simplifyMm: 0.15,
+      });
+      const slug = job.color.replace('#', '');
+      return {
+        color: job.color,
+        count: objs.length,
+        hpgl: E.hpgl(ents, { velocity: 20 }),
+        dxf: E.dxf(ents),
+        nameHpgl: 'kit-' + slug + '.plt',
+        nameDxf: 'kit-' + slug + '.dxf',
+      };
+    });
+  }
+
+  window.exportColorJobs = function exportColorJobs() {
+    const jobs = collectColorJobs();
+    if (!jobs.length) { showToast('Place a kit first', 'w'); return; }
+    const files = [];
+    jobs.forEach(function (j) {
+      files.push({ name: j.nameHpgl, text: j.hpgl });
+      files.push({ name: j.nameDxf, text: j.dxf });
+    });
+    if (window.desktop && window.desktop.saveJobs) {
+      const packed = files.map(function (f) {
+        return { name: f.name, b64: btoa(unescape(encodeURIComponent(f.text))) };
+      });
+      window.desktop.saveJobs(packed).then(function (res) {
+        if (res && res.ok) showToast(jobs.length + ' colour jobs written', 's');
+      });
+      return;
+    }
+    files.forEach(function (f) {
+      dlBlob(new Blob([f.text], { type: 'application/octet-stream' }), f.name);
+    });
+    showToast(jobs.length + ' colour jobs exported (load vinyl per colour)', 's');
+  };
+
+  window.sendToPlotter = async function sendToPlotter() {
+    const jobs = collectColorJobs();
+    if (!jobs.length) { showToast('Nothing to send — place a kit or artwork', 'w'); return; }
+    if (navigator.serial && navigator.serial.requestPort) {
+      try {
+        const port = await navigator.serial.requestPort();
+        await port.open({ baudRate: parseInt(($('kit-baud') || {}).value, 10) || 9600 });
+        const writer = port.writable.getWriter();
+        const enc = new TextEncoder();
+        for (let i = 0; i < jobs.length; i++) {
+          showToast('Sending ' + jobs[i].color + ' (' + (i + 1) + '/' + jobs.length + ') — load that vinyl', 's');
+          await writer.write(enc.encode(jobs[i].hpgl));
+          if (i < jobs.length - 1 && !confirm('Colour ' + jobs[i].color + ' sent. Load next vinyl (' + jobs[i + 1].color + ') then OK.')) break;
+        }
+        writer.releaseLock();
+        await port.close();
+        showToast('Plotter send finished', 's');
+        return;
+      } catch (err) {
+        showToast('Serial send failed — exporting files instead', 'w');
+      }
+    }
+    exportColorJobs();
+  };
+
   document.addEventListener('DOMContentLoaded', function () {
     fillPresetSelect();
     const roster = $('kit-roster');
     if (roster) roster.addEventListener('input', previewCount);
-    ['kit-preset', 'kit-skip-name', 'kit-skip-front', 'kit-skip-back'].forEach(function (id) {
+    ['kit-preset', 'kit-skip-name', 'kit-skip-front', 'kit-skip-back', 'kit-price', 'kit-waste', 'kit-ccy'].forEach(function (id) {
       const el = $(id);
+      if (el) el.addEventListener('input', previewCount);
       if (el) el.addEventListener('change', previewCount);
     });
     const go = $('kit-place');
     if (go) go.addEventListener('click', placeKit);
+    const csv = $('kit-csv');
+    if (csv) csv.addEventListener('change', function (e) {
+      const f = e.target.files && e.target.files[0];
+      if (f) loadRosterCsv(f);
+      e.target.value = '';
+    });
+    const exp = $('kit-export-colors');
+    if (exp) exp.addEventListener('click', exportColorJobs);
+    const send = $('kit-send');
+    if (send) send.addEventListener('click', function () { sendToPlotter(); });
   });
 })();

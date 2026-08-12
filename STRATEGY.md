@@ -38,17 +38,18 @@ Source: common kit practice (back 8–12", names 2–3", front 4–6").
 
 ## Roadmap to “shops prefer us”
 
-### Now (this pass)
+### Shipped
 1. **Team Kit** — paste `NAME,NUMBER` → generate name + front + back at real mm.
 2. **HTV prep** — Mirror all (heat-transfer), weed box around the job.
 3. Auto-nest the batch on the vinyl sheet.
+4. **CSV roster** (Excel / coach list, including `Name,Number` headers).
+5. **Colour-split jobs** — names one vinyl, numbers another; HPGL+DXF per colour.
+6. **Vinyl quote** — cm² × price/m² + waste % (KES/USD/EUR/GBP).
+7. **Send to plotter** — Web Serial when the OS exposes the cutter; otherwise a colour-job folder.
 
 ### Next
-4. CSV roster upload (Excel from the coach).
-5. Colour-split jobs (white names / black numbers as two cut files).
-6. Vinyl cost: cm² × price/m → quote the school.
-7. Press recipe card (temp / time / peel) per material.
-8. USB/serial send (Graphtec / Roland / Chinese plotters).
+8. Press recipe card (temp / time / peel) per material.
+9. Native USB drivers for Graphtec / Roland / Chinese plotters where Web Serial is blocked.
 
 ### Later (still no UI rebuild)
 9. True-shape nest with rotation.

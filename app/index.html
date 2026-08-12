@@ -596,6 +596,7 @@ select.pi{cursor:pointer}
         <div class="scard"><div class="scttl">Material Usage</div><div class="scval" id="mu">—</div><div class="scsub" id="ma">Calculate after nesting</div><div class="pbar"><div class="pfill" id="mb" style="width:0%"></div></div></div>
         <div class="scard"><div class="scttl">Objects</div><div class="scval" id="oc">0</div><div class="scsub">Design elements</div></div>
         <div class="scard"><div class="scttl">Cut Nodes</div><div class="scval" id="nc">0</div><div class="scsub">Optimized for plotter speed</div></div>
+        <div class="scard"><div class="scttl">Vinyl quote</div><div class="scval" id="quote-out">—</div><div class="scsub" id="quote-sub">Set price in Kit</div></div>
         <div class="sec">
           <div class="sttl">⬛ Nesting</div>
           <div class="prow"><span class="plbl">Margin</span><input type="number" class="pi" id="nm-in" value="3" min="0" max="30"><span class="vbdg">mm</span></div>
@@ -744,8 +745,41 @@ select.pi{cursor:pointer}
           <label style="font-size:11px;display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="kit-skip-back" checked> Back number</label>
         </div>
       </div>
+      <div class="prow">
+        <span class="plbl">CSV</span>
+        <input type="file" class="pi" id="kit-csv" accept=".csv,.txt,text/csv">
+      </div>
+      <div class="prow">
+        <span class="plbl">Names</span>
+        <input type="color" class="pi" id="kit-name-col" value="#ffffff" style="padding:2px;height:28px">
+        <span class="plbl" style="width:auto;margin:0 4px">Nos</span>
+        <input type="color" class="pi" id="kit-num-col" value="#111111" style="padding:2px;height:28px">
+      </div>
+      <div class="prow">
+        <span class="plbl">Price/m²</span>
+        <input type="number" class="pi" id="kit-price" value="450" min="0" step="10">
+        <span class="vbdg">KES</span>
+      </div>
+      <div class="prow">
+        <span class="plbl">Waste</span>
+        <input type="number" class="pi" id="kit-waste" value="15" min="0" max="80">
+        <span class="vbdg">%</span>
+      </div>
+      <div class="prow">
+        <span class="plbl">Money</span>
+        <select class="pi" id="kit-ccy">
+          <option value="KES" selected>KES</option>
+          <option value="USD">USD</option>
+          <option value="EUR">EUR</option>
+          <option value="GBP">GBP</option>
+        </select>
+      </div>
       <textarea class="pi" id="kit-roster" rows="8" placeholder="OTIENO,10&#10;KAMAU,7&#10;WANJIKU,4" style="width:100%;min-height:140px;resize:vertical;margin-bottom:8px"></textarea>
-      <div id="kit-stat" style="font-size:11px;color:var(--t3);margin-bottom:8px">Paste a roster to preview piece count.</div>
+      <div id="kit-stat" style="font-size:11px;color:var(--t3);margin-bottom:8px">Paste a roster or load a coach CSV.</div>
+      <div class="bgrp" style="flex-wrap:wrap;margin-bottom:8px">
+        <button class="btn bs bsm" id="kit-export-colors">Export colour jobs</button>
+        <button class="btn bs bsm" id="kit-send">Send to plotter</button>
+      </div>
     </div>
     <div class="mact">
       <button class="btn bs" onclick="closeModal('kit-modal')">Cancel</button>

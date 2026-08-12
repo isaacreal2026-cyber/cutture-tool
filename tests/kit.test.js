@@ -32,5 +32,23 @@ check('can emit names only', namesOnly.length === 2 && namesOnly.every((p) => p.
 const area = K.vinylAreaCm2(all);
 check('vinyl quote area is positive', area > 10);
 
+const csv = K.parseRosterCsv('Name,Number\n"Otieno, Jr",10\nKamau,7\n');
+check('CSV header maps name/number', csv.some((p) => p.name === 'OTIENO JR' && p.number === '10') && csv.length === 2);
+check('CSV BOM + number-first header', K.parseRosterCsv('\uFEFFJersey,Player\n4,Wanjiku')[0].number === '4');
+
+const jobs = K.splitJobsByColor([
+  { fill: '#fff', kind: 'name' },
+  { fill: '#ffffff', kind: 'name' },
+  { fill: '#000', kind: 'back' },
+  { fill: 'black', kind: 'front' },
+]);
+check('colour split collapses #fff/#ffffff and #000/black', jobs.length === 2);
+check('normalize short hex', K.normalizeHex('#fff') === '#ffffff');
+
+const q = K.quoteVinyl(10000, { pricePerM2: 450, wastePct: 15, currency: 'KES' });
+check('quote applies 15% waste', Math.abs(q.usedCm2 - 11500) < 0.2);
+check('quote 1.15m² × 450 = 517.5', Math.abs(q.total - 517.5) < 0.05);
+check('quote text includes currency', q.text.indexOf('KES') === 0);
+
 if (failed) { console.log('\nkit tests FAILED: ' + failed); process.exit(1); }
 console.log('\nkit tests: all passed');

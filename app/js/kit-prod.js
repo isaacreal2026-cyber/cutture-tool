@@ -89,7 +89,6 @@
   }
 
   function vinylAreaCm2(pieces) {
-    // Conservative: height × 0.7 width factor per glyph, for quoting.
     let mm2 = 0;
     (pieces || []).forEach(function (p) {
       const glyphs = Math.max(1, String(p.text || '').length);
@@ -99,11 +98,97 @@
     return mm2 / 100;
   }
 
+  function parseCsvLine(line) {
+    const out = [];
+    let cur = '', q = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') { q = !q; continue; }
+      if (!q && (c === ',' || c === ';' || c === '\t')) { out.push(cur); cur = ''; continue; }
+      cur += c;
+    }
+    out.push(cur);
+    return out.map(function (s) { return s.replace(/^\s+|\s+$/g, ''); });
+  }
+
+  function parseRosterCsv(text) {
+    const raw = String(text || '').replace(/^\uFEFF/, '');
+    const lines = raw.split(/\r?\n/).filter(function (l) { return l.replace(/^\s+|\s+$/g, '').length; });
+    if (!lines.length) return [];
+    const head = parseCsvLine(lines[0]).map(function (h) { return h.toLowerCase(); });
+    const looksHeader = head.some(function (h) { return /name|player|jina/.test(h); })
+      || head.some(function (h) { return /num|jersey|no\.?|#/.test(h); });
+    let start = 0, ni = 0, numi = 1;
+    if (looksHeader) {
+      start = 1;
+      const nIdx = head.findIndex(function (h) { return /name|player|jina/.test(h); });
+      const uIdx = head.findIndex(function (h) { return /num|jersey|no\.?|#/.test(h); });
+      if (nIdx >= 0) ni = nIdx;
+      if (uIdx >= 0) numi = uIdx;
+    }
+    const block = [];
+    for (let i = start; i < lines.length; i++) {
+      const cols = parseCsvLine(lines[i]);
+      if (!cols.length) continue;
+      const name = (cols[ni] || '').replace(/,/g, ' ');
+      const number = cols[numi] || '';
+      block.push(name + '\t' + number);
+    }
+    return parseRoster(block.join('\n'));
+  }
+
+  function normalizeHex(color) {
+    let c = String(color || '#000000').toLowerCase();
+    if (c === 'black') return '#000000';
+    if (c === 'white') return '#ffffff';
+    if (/^#[0-9a-f]{3}$/.test(c)) {
+      return '#' + c[1] + c[1] + c[2] + c[2] + c[3] + c[3];
+    }
+    const m = c.match(/^#([0-9a-f]{6})$/);
+    return m ? '#' + m[1] : '#000000';
+  }
+
+  function splitJobsByColor(items) {
+    const map = Object.create(null);
+    (items || []).forEach(function (it) {
+      const hex = normalizeHex(it.fill || it.color || '#000000');
+      if (!map[hex]) map[hex] = { color: hex, items: [] };
+      map[hex].items.push(it);
+    });
+    return Object.keys(map).map(function (k) { return map[k]; });
+  }
+
+  function quoteVinyl(cm2, opts) {
+    const o = opts || {};
+    const waste = Math.max(0, Number(o.wastePct) || 0);
+    const price = Math.max(0, Number(o.pricePerM2) || 0);
+    const design = Number(cm2) || 0;
+    const used = design * (1 + waste / 100);
+    const m2 = used / 10000;
+    const total = m2 * price;
+    const currency = o.currency || 'KES';
+    return {
+      designCm2: Math.round(design * 10) / 10,
+      usedCm2: Math.round(used * 10) / 10,
+      m2: Math.round(m2 * 10000) / 10000,
+      pricePerM2: price,
+      wastePct: waste,
+      total: Math.round(total * 100) / 100,
+      currency: currency,
+      text: currency + ' ' + (Math.round(total * 100) / 100).toFixed(2) + ' · ' + (Math.round(used * 10) / 10) + ' cm² incl. ' + waste + '% waste',
+    };
+  }
+
   return {
     PRESETS: PRESETS,
     parseRoster: parseRoster,
+    parseRosterCsv: parseRosterCsv,
+    parseCsvLine: parseCsvLine,
     kitPieces: kitPieces,
     buildKit: buildKit,
     vinylAreaCm2: vinylAreaCm2,
+    normalizeHex: normalizeHex,
+    splitJobsByColor: splitJobsByColor,
+    quoteVinyl: quoteVinyl,
   };
 });
