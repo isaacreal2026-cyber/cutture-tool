@@ -374,6 +374,7 @@
   };
 
   document.addEventListener('DOMContentLoaded', () => {
+    if (typeof FC !== 'undefined') window.FC = FC;
     setUnitBadges();
     const readyEl = document.getElementById('s-plat');
     if (readyEl) readyEl.textContent = platformName();

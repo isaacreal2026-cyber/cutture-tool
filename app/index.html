@@ -890,7 +890,10 @@ window.addEventListener('DOMContentLoaded', () => {
       else if (ch === 'menu:delete') deleteSelected();
     });
   }
-  const ready = window.desktop && window.desktop.isDesktop ? 'Windows desktop' : 'browser';
+  if (typeof FC !== 'undefined') window.FC = FC;
+  const ready = (typeof platformName === 'function') ? platformName() : (window.desktop && window.desktop.isDesktop ? 'desktop' : 'browser');
+  const plat = document.getElementById('s-plat');
+  if (plat) plat.textContent = ready;
   showToast('✂ CutterStudio Pro · aisac · Ready (' + ready + ')', 's');
 });
 
@@ -1476,7 +1479,7 @@ function onMM(opt){
 // ================================================================
 function saveH(){
   if(!FC || histBusy) return;
-  const j=JSON.stringify(FC.toJSON(['objType','isGuide']));
+  const j=JSON.stringify(FC.toJSON(['objType','isGuide','cutCommands','bgRemoved']));
   if(undoStack.length && undoStack[undoStack.length-1]===j) return;
   undoStack.push(j);
   if(undoStack.length>40)undoStack.shift();
@@ -1694,7 +1697,13 @@ function genDXF(){
 
 function dlBlob(blob,name){
   if(window.desktop && window.desktop.saveFile){
-    blob.arrayBuffer().then(buf => window.desktop.saveFile(name, Array.from(new Uint8Array(buf))));
+    const reader = new FileReader();
+    reader.onload = function () {
+      const s = String(reader.result || '');
+      const b64 = s.indexOf(',') >= 0 ? s.split(',')[1] : s;
+      window.desktop.saveFile(name, b64);
+    };
+    reader.readAsDataURL(blob);
     return;
   }
   const u=URL.createObjectURL(blob);

@@ -138,8 +138,16 @@
     return c.toDataURL('image/png');
   }
 
+  function canvas() {
+    return (typeof FC !== 'undefined' && FC) || window.FC || null;
+  }
+
   function placeOnCanvas() {
-    if (!state.work || !window.FC) return;
+    const board = canvas();
+    if (!state.work || !board) {
+      showToast('Canvas not ready — try again', 'w');
+      return;
+    }
     if (state.crop) applyCrop();
     const url = toDataURL();
     const cmds = P.localCutCommands(state.work, state.ww, state.wh, 0.7);
@@ -150,18 +158,18 @@
     lastImg = url;
     fabric.Image.fromURL(url, function (img) {
       img.set({
-        left: FC.width / 2,
-        top: FC.height / 2,
+        left: board.width / 2,
+        top: board.height / 2,
         originX: 'center',
         originY: 'center',
         objType: 'logo',
         cutCommands: cmds,
         bgRemoved: true,
       });
-      img.scaleToWidth(Math.min(280, FC.width * 0.45));
-      FC.add(img);
-      FC.setActiveObject(img);
-      FC.renderAll();
+      img.scaleToWidth(Math.min(280, board.width * 0.45));
+      board.add(img);
+      board.setActiveObject(img);
+      board.renderAll();
       saveH();
       const vsec = $('vsec');
       if (vsec) vsec.style.display = 'block';
@@ -199,10 +207,16 @@
     const r = new FileReader();
     r.onload = function (e) {
       fabric.loadSVGFromString(e.target.result, function (objs, opts) {
-        const g = fabric.util.groupSVGElements(objs, opts);
-        g.scaleToWidth(Math.min(200, FC.width * 0.4));
-        g.set({ left: FC.width / 2, top: FC.height / 2, originX: 'center', originY: 'center', objType: 'svg' });
-        FC.add(g); FC.setActiveObject(g); FC.renderAll(); saveH();
+        const board = canvas();
+        if (!board || !objs || !objs.length) {
+          showToast('SVG had no drawable paths', 'w');
+          return;
+        }
+        const g = fabric.util.groupSVGElements(objs, opts || {});
+        if (!g) { showToast('Could not group SVG', 'e'); return; }
+        g.scaleToWidth(Math.min(200, board.width * 0.4));
+        g.set({ left: board.width / 2, top: board.height / 2, originX: 'center', originY: 'center', objType: 'svg' });
+        board.add(g); board.setActiveObject(g); board.renderAll(); saveH();
         showToast('SVG imported', 's');
       });
     };

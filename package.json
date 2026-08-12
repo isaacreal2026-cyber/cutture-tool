@@ -10,7 +10,7 @@
     "start": "electron .",
     "dev": "electron .",
     "preview": "python3 -m http.server 8080 --bind 0.0.0.0 --directory app",
-    "test": "node tests/verify.js && node tests/engine.test.js && node tests/image-prep.test.js",
+    "test": "node tests/verify.js && node tests/engine.test.js && node tests/image-prep.test.js && node tests/features.test.js",
     "pack:win": "electron-builder --win --x64",
     "pack:linux": "electron-builder --linux --x64",
     "pack": "electron-builder --win --linux --x64"

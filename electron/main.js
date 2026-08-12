@@ -127,13 +127,14 @@ function filtersFor(name) {
   return map[ext] || [{ name: 'All files', extensions: ['*'] }];
 }
 
-ipcMain.handle('save-file', async (_evt, { name, bytes }) => {
+ipcMain.handle('save-file', async (_evt, { name, b64, bytes }) => {
   const { canceled, filePath } = await dialog.showSaveDialog(mainWindow, {
     defaultPath: name || 'export.bin',
     filters: filtersFor(name),
   });
   if (canceled || !filePath) return { ok: false };
-  fs.writeFileSync(filePath, Buffer.from(bytes));
+  const buf = b64 != null ? Buffer.from(b64, 'base64') : Buffer.from(bytes || []);
+  fs.writeFileSync(filePath, buf);
   if ((name || '').endsWith('.json')) currentProjectPath = filePath;
   return { ok: true, filePath };
 });

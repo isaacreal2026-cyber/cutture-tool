@@ -31,11 +31,13 @@
 
   function toMm(value, unit) {
     const u = UNITS[unit] || UNITS.cm;
-    return Number(value) / u.perMm;
+    const n = Number(value);
+    return Number.isFinite(n) ? n / u.perMm : 0;
   }
   function fromMm(mm, unit) {
     const u = UNITS[unit] || UNITS.cm;
-    return Number(mm) * u.perMm;
+    const n = Number(mm);
+    return Number.isFinite(n) ? n * u.perMm : 0;
   }
   function sheetPx(width, height, unit) {
     return {
@@ -212,6 +214,52 @@
     return pts;
   }
 
+  function sampleArc(from, to, rx, ry, xrotDeg, large, sweep, n) {
+    rx = Math.abs(rx || 0); ry = Math.abs(ry || 0);
+    if (rx < 1e-6 || ry < 1e-6) return [to];
+    const phi = ((xrotDeg || 0) * Math.PI) / 180;
+    const cosP = Math.cos(phi), sinP = Math.sin(phi);
+    const dx = (from.x - to.x) / 2, dy = (from.y - to.y) / 2;
+    const x1 = cosP * dx + sinP * dy;
+    const y1 = -sinP * dx + cosP * dy;
+    let rx2 = rx * rx, ry2 = ry * ry;
+    const x12 = x1 * x1, y12 = y1 * y1;
+    const lam = x12 / rx2 + y12 / ry2;
+    if (lam > 1) { const s = Math.sqrt(lam); rx *= s; ry *= s; rx2 = rx * rx; ry2 = ry * ry; }
+    const sign = (large === sweep) ? -1 : 1;
+    let sq = (rx2 * ry2 - rx2 * y12 - ry2 * x12) / (rx2 * y12 + ry2 * x12);
+    sq = Math.max(0, sq);
+    const coef = sign * Math.sqrt(sq);
+    const cx1 = coef * (rx * y1) / ry;
+    const cy1 = coef * -(ry * x1) / rx;
+    const cx = cosP * cx1 - sinP * cy1 + (from.x + to.x) / 2;
+    const cy = sinP * cx1 + cosP * cy1 + (from.y + to.y) / 2;
+    function angle(ux, uy, vx, vy) {
+      const dot = ux * vx + uy * vy;
+      const len = Math.hypot(ux, uy) * Math.hypot(vx, vy) || 1;
+      let a = Math.acos(Math.max(-1, Math.min(1, dot / len)));
+      if (ux * vy - uy * vx < 0) a = -a;
+      return a;
+    }
+    const ux = (x1 - cx1) / rx, uy = (y1 - cy1) / ry;
+    const vx = (-x1 - cx1) / rx, vy = (-y1 - cy1) / ry;
+    const t1 = angle(1, 0, ux, uy);
+    let dt = angle(ux, uy, vx, vy);
+    if (!sweep && dt > 0) dt -= Math.PI * 2;
+    if (sweep && dt < 0) dt += Math.PI * 2;
+    const steps = Math.max(4, n || 12);
+    const pts = [];
+    for (let i = 1; i <= steps; i++) {
+      const t = t1 + (dt * i) / steps;
+      const x = rx * Math.cos(t), y = ry * Math.sin(t);
+      pts.push({
+        x: cosP * x - sinP * y + cx,
+        y: sinP * x + cosP * y + cy,
+      });
+    }
+    return pts;
+  }
+
   function pathCommandsToPolylines(commands, matrix, samples) {
     const n = samples || 8;
     const loops = [];
@@ -238,6 +286,10 @@
         const e = xf(cmd[5], cmd[6]);
         cur.push.apply(cur, sampleCubic(pen, c1, c2, e, n));
         pen = e;
+      } else if (k === 'A' || k === 'a') {
+        const end = xf(cmd[6], cmd[7]);
+        cur.push.apply(cur, sampleArc(pen, end, cmd[1], cmd[2], cmd[3], cmd[4], cmd[5], 16));
+        pen = end;
       } else if (k === 'Z') {
         if (cur.length) loops.push({ points: cur, closed: true });
         cur = [];
@@ -284,7 +336,18 @@
     }
     if (obj.type === 'circle') {
       const c = obj.getCenterPoint ? obj.getCenterPoint() : { x: obj.left, y: obj.top };
-      const r = (obj.radius || 0) * (obj.scaleX || 1);
+      const sx = obj.scaleX || 1, sy = obj.scaleY || 1;
+      if (Math.abs(sx - sy) > 0.02) {
+        const m = obj.calcTransformMatrix ? obj.calcTransformMatrix() : [1, 0, 0, 1, c.x, c.y];
+        const pts = [];
+        const steps = 32;
+        for (let i = 0; i < steps; i++) {
+          const a = (i / steps) * Math.PI * 2;
+          pts.push(transformPoint((obj.radius || 0) * Math.cos(a), (obj.radius || 0) * Math.sin(a), m));
+        }
+        return [{ type: 'polyline', closed: true, points: mapPts(pts) }];
+      }
+      const r = (obj.radius || 0) * sx;
       return [{ type: 'circle', cx: toMmX(c.x), cy: toMmY(c.y), r: r / pxPerMmLocal }];
     }
     if (obj.path && Array.isArray(obj.path)) {
