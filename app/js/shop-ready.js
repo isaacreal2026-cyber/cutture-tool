@@ -85,7 +85,8 @@
     const force = Number(o.force != null ? o.force : p.force);
     const pen = Number(o.pen != null ? o.pen : p.pen) || 1;
     const baud = Number(o.baud != null ? o.baud : p.baud) || 9600;
-    return { velocity: velocity, force: force, pen: pen, baud: baud, profile: p.id };
+    const overcutMm = Number(o.overcutMm) || 0;
+    return { velocity: velocity, force: force, pen: pen, baud: baud, overcutMm: overcutMm, profile: p.id };
   }
 
   function expandCopies(items, copies) {

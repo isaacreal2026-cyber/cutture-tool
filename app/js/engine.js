@@ -142,7 +142,7 @@
 
   function isShopFixture(obj) {
     const t = obj && obj.objType;
-    return t === 'weed-box' || t === 'reg-mark';
+    return t === 'weed-box' || t === 'reg-mark' || t === 'weed-tab' || t === 'test-cut';
   }
 
   function simplify(points, epsilon) {
@@ -245,6 +245,12 @@
       lines.push('PU' + u(pts[0].x) + ',' + u(pts[0].y) + ';');
       const rest = pts.slice(1);
       if (ent.closed) rest.push(pts[0]);
+      const oc = Number(o.overcutMm) || 0;
+      if (ent.closed && oc > 0 && pts.length >= 2) {
+        const a = pts[0], b = pts[1];
+        const len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+        rest.push({ x: a.x + ((b.x - a.x) / len) * oc, y: a.y + ((b.y - a.y) / len) * oc });
+      }
       lines.push('PD' + rest.map((p) => u(p.x) + ',' + u(p.y)).join(',') + ';');
     });
     if (o.force != null && Number.isFinite(Number(o.force)) && Number(o.force) > 0) {

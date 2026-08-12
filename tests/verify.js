@@ -77,6 +77,8 @@ ok('Edit bar modal + curve + custom shapes', html.includes('id="edit-modal"') &&
 ok('map-zoom geometry layer loaded', html.includes('js/map-zoom.js'));
 ok('production shop-ready layer', html.includes('js/shop-ready.js') && html.includes('id="kit-plotter"') && html.includes('id="shop-type"') && html.includes('id="queue-modal"'));
 ok('shop-ready before map-zoom', html.indexOf('shop-ready.js') < html.lastIndexOf('map-zoom.js'));
+ok('shop tools weld/offset/test-cut wired', html.includes('js/shop-tools.js') && html.includes('weldSelection') && html.includes('addTestCut') && html.includes('id="kit-overcut"'));
+ok('shop-tools before map-zoom', html.indexOf('shop-tools.js') < html.lastIndexOf('map-zoom.js'));
 ok('team kit production wired', html.includes('js/kit-prod.js') && html.includes('id="kit-modal"') && html.includes('mirrorForHtv'));
 ok('CSV + quote + plotter send wired', html.includes('id="kit-csv"') && html.includes('kit-export-colors') && html.includes('kit-send') && html.includes('quote-out'));
 ok('image prep + editor loaded', html.includes('js/image-prep.js') && html.includes('js/image-editor.js') && html.includes('id="img-modal"'));

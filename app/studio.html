@@ -328,7 +328,7 @@ select.pi{cursor:pointer}
   <button class="mbtn" onclick="saveProject()">Save</button>
   <button class="mbtn" onclick="showEditModal()">Edit</button>
   <button class="mbtn" onclick="showToast('Grid · Rulers · Cut Preview via toolbar','s')">View</button>
-  <button class="mbtn" onclick="showToast('Group · Align · Flip · Layer order in toolbar','s')">Arrange</button>
+  <button class="mbtn" onclick="showEditModal()">Arrange</button>
   <div class="tsep"></div>
   <button class="tbtn" onclick="undo()" title="Ctrl+Z">↩ Undo</button>
   <button class="tbtn" onclick="redo()" title="Ctrl+Y">↪ Redo</button>
@@ -644,7 +644,26 @@ select.pi{cursor:pointer}
             <button class="btn bs bsm" onclick="addWeedBox()">Weed box</button>
             <button class="btn bs bsm" onclick="addRegMarks()">Reg marks</button>
             <button class="btn bs bsm" onclick="showJobTicket()">Job ticket</button>
+            <button class="btn bs bsm" onclick="addWeedTabs()">Weed tabs</button>
+            <button class="btn bs bsm" onclick="addTestCut()">Test cut</button>
           </div>
+          <div class="prow" style="margin-top:8px">
+            <span class="plbl">Test</span>
+            <input type="number" class="pi" id="sheet-test-mm" value="10" min="5" max="40">
+            <span class="vbdg">mm</span>
+          </div>
+          <div class="prow">
+            <span class="plbl">Overcut</span>
+            <input type="number" class="pi" id="sheet-overcut" value="0.8" min="0" max="5" step="0.1">
+            <span class="vbdg">mm</span>
+          </div>
+          <div class="prow">
+            <span class="plbl">Tile ov.</span>
+            <input type="number" class="pi" id="sheet-tile-ov" value="5" min="0" max="20">
+            <span class="vbdg">mm</span>
+          </div>
+          <button class="btn bs bw bsm" onclick="tileOversized()">Check tile / oversized</button>
+          <div class="exprev" id="tile-out">Fits on one sheet unless the art is wider than the roll.</div>
           <label style="font-size:11px;display:flex;align-items:center;gap:5px;cursor:pointer;margin-top:8px">
             <input type="checkbox" id="nest-rotate"> Rotate 90° when nesting
           </label>
@@ -847,6 +866,11 @@ select.pi{cursor:pointer}
         <span class="plbl">Copies</span>
         <input type="number" class="pi" id="kit-copies" value="1" min="1" max="50">
       </div>
+      <div class="prow">
+        <span class="plbl">Overcut</span>
+        <input type="number" class="pi" id="kit-overcut" value="0.8" min="0" max="5" step="0.1">
+        <span class="vbdg">mm</span>
+      </div>
       <textarea class="pi" id="kit-roster" rows="8" placeholder="OTIENO,10&#10;KAMAU,7&#10;WANJIKU,4" style="width:100%;min-height:140px;resize:vertical;margin-bottom:8px"></textarea>
       <div id="kit-stat" style="font-size:11px;color:var(--t3);margin-bottom:8px">Paste a roster or load a coach CSV.</div>
       <div class="bgrp" style="flex-wrap:wrap;margin-bottom:8px">
@@ -879,6 +903,30 @@ select.pi{cursor:pointer}
         <button class="btn bs bsm" onclick="bringForward()">Fwd</button>
         <button class="btn bs bsm" onclick="sendBackward()">Back</button>
       </div>
+    </div>
+    <div class="sec">
+      <div class="sttl">Align / weld / size</div>
+      <div class="bgrp" style="flex-wrap:wrap">
+        <button class="btn bs bsm" onclick="alignSelection('left')">Left</button>
+        <button class="btn bs bsm" onclick="alignSelection('right')">Right</button>
+        <button class="btn bs bsm" onclick="alignSelection('top')">Top</button>
+        <button class="btn bs bsm" onclick="alignSelection('bottom')">Bottom</button>
+        <button class="btn bs bsm" onclick="distributeSelection('x')">Dist H</button>
+        <button class="btn bs bsm" onclick="distributeSelection('y')">Dist V</button>
+        <button class="btn bs bsm" onclick="weldSelection()">Weld</button>
+      </div>
+      <div class="prow" style="margin-top:8px">
+        <span class="plbl">Offset</span>
+        <input type="number" class="pi" id="edit-offset-mm" value="3" min="0.5" max="40" step="0.5">
+        <span class="vbdg">mm</span>
+      </div>
+      <button class="btn bs bw bsm" onclick="offsetSelection()">Add contour</button>
+      <div class="prow" style="margin-top:8px">
+        <span class="plbl">Height</span>
+        <input type="number" class="pi" id="edit-height-mm" value="250" min="5" max="800" step="1">
+        <span class="vbdg">mm</span>
+      </div>
+      <button class="btn bs bw bsm" onclick="applyHeightMm()">Size selection to mm</button>
     </div>
     <div class="sec" id="edit-text" style="display:none">
       <div class="sttl">Text</div>
@@ -2077,6 +2125,7 @@ switchTab('props');
 <script src="js/edit-bar.js"></script>
 <script src="js/shop-floor.js"></script>
 <script src="js/shop-ready.js"></script>
+<script src="js/shop-tools.js"></script>
 <script src="js/map-zoom.js"></script>
 </body>
 </html>

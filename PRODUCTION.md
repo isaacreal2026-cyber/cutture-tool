@@ -30,6 +30,8 @@ It does **not** mean: native Graphtec USB driver, camera print+cut, hair-quality
 | Project v3 | Save / Open | Roster + shop settings + quick shapes travel with the `.json`. |
 | Delete custom quick shape | Right-click tile | Still browser/Electron localStorage. |
 | Cut order left-to-right | `CutterEngine.sortEntitiesForCut` | Weed-friendly, not true shortest-path TSP. |
+| Weld / contour / align / size-to-mm | Edit modal | Weld is a hull of overlapping boxes, not a boolean path union. |
+| Test cut + weed tabs + overcut + tile check | Sheet + Kit | Tile reports how many sheets; it does not auto-split the canvas yet. |
 
 ## Later (still open-closed — new module or optional arg)
 

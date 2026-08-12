@@ -69,6 +69,7 @@
       ? ShopReady.hpglOpts((document.getElementById('kit-plotter') || {}).value, {
         velocity: parseInt((document.getElementById('kit-vs') || {}).value, 10),
         force: parseInt((document.getElementById('kit-fs') || {}).value, 10),
+        overcutMm: parseFloat((document.getElementById('kit-overcut') || document.getElementById('sheet-overcut') || {}).value) || 0,
       })
       : { velocity: 20 };
     return E.hpgl(collectCutEntities(), opts);

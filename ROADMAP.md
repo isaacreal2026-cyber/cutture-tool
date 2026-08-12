@@ -35,6 +35,17 @@ Research date: 2026-08-12. Existing studio chrome, engine API, and Kit modal sta
 16. **Project v3** — roster + shop + quick shapes in the `.json`.
 17. **Cut order** — left-to-right before HPGL.
 
+## Shipped (shop tools, 1.3.0)
+
+18. **Weld** overlapping pieces (convex hull of touching boxes).
+19. **Contour offset** around a name/logo (HTV outline).
+20. **Align L/R/T/B** + **distribute** H/V.
+21. **Size selection to mm** (back number 250, etc.).
+22. **Test cut** 10 mm square.
+23. **Weed tabs** (4 mm bridges).
+24. **HPGL overcut** so closed shapes finish the corner.
+25. **Tile check** when art is wider than the roll.
+
 ## Next (still no chrome rebuild)
 
 | # | Add | How (open-closed) |

@@ -73,6 +73,7 @@
       velocity: parseInt(($('kit-vs') || {}).value, 10),
       force: parseInt(($('kit-fs') || {}).value, 10),
       baud: parseInt(($('kit-baud') || {}).value, 10),
+      overcutMm: parseFloat(($('kit-overcut') || $('sheet-overcut') || {}).value) || 0,
     });
   }
 
