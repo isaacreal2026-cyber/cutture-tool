@@ -1,0 +1,45 @@
+{
+  "name": "cutterstudio-pro",
+  "productName": "CutterStudio Pro",
+  "version": "1.0.0",
+  "description": "aisac vinyl cutter & plotter studio — Windows desktop app",
+  "main": "electron/main.js",
+  "author": "aisac",
+  "license": "UNLICENSED",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron .",
+    "preview": "python3 -m http.server 8080 --bind 0.0.0.0 --directory app",
+    "test": "node tests/verify.js",
+    "pack:win": "electron-builder --win --x64"
+  },
+  "devDependencies": {
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.aisac.cutterstudio",
+    "productName": "CutterStudio Pro",
+    "files": [
+      "app/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ],
+      "artifactName": "CutterStudio-Pro-${version}-${os}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  }
+}
