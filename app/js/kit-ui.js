@@ -263,7 +263,7 @@
       const ents = E.objectsToEntities(objs, {
         pxPerMm: E.PX_PER_MM,
         heightPx: fc.height,
-        simplifyMm: 0.15,
+        simplifyMm: 0.08,
       });
       const slug = job.color.replace('#', '');
       return {

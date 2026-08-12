@@ -15,6 +15,8 @@ Updated 2026-08-12.
 9. Raster fallback tracer uses **alpha as the mask**.
 10. Opening a project no longer toasts a fake “canvas resized” every time.
 
+28. **Auto BG** uses Lab distance, 8-connect flood, fringe grow, and edge lock. Cream paper and light-grey marks are tested. Hair / same-colour is still Pick BG — not a portrait model.
+
 ## Background-remove guarantee
 
 | Input | Result |

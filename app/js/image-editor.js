@@ -98,8 +98,9 @@
     if (!state.work) return;
     const opts = {
       tolerance: currentTolerance(),
+      auto: !state.customBg,
       punchHoles: $('img-holes') && $('img-holes').checked,
-      despeckle: $('img-speck') && $('img-speck').checked ? 10 : 0,
+      despeckle: $('img-speck') && $('img-speck').checked ? 14 : 0,
       force: $('img-force') && $('img-force').checked,
       bg: state.customBg || undefined,
     };
@@ -114,10 +115,10 @@
       state.wh = trim.height;
       state.crop = null;
     }
-    const pct = Math.round((out.remaining / (state.w * state.h)) * 100);
+    const pct = Math.round((out.remaining / Math.max(1, state.w * state.h)) * 100);
     if (out.preserved) setStatus('Existing transparency kept (PNG). Ready to place.');
-    else if (out.remaining < 12) setStatus('Almost nothing left — raise tolerance or pick the true background.');
-    else setStatus('Background removed · ' + state.ww + '×' + state.wh + ' · ~' + pct + '% subject');
+    else if (out.remaining < 12) setStatus('Almost nothing left — lower tolerance or Pick BG on the paper colour.');
+    else setStatus('BG keyed (Lab flood, tol ' + out.tolerance + ') · ' + state.ww + '×' + state.wh + ' · ~' + pct + '% subject. Hair / same-colour still need Pick BG.');
     drawPreview();
   }
 
@@ -150,7 +151,7 @@
     }
     if (state.crop) applyCrop();
     const url = toDataURL();
-    const cmds = P.localCutCommands(state.work, state.ww, state.wh, 0.7);
+    const cmds = P.localCutCommands(state.work, state.ww, state.wh, 0.45);
     if (!cmds.length) {
       showToast('No silhouette — remove background or check contrast', 'w');
       return;
@@ -192,11 +193,12 @@
         if (P.hasExistingAlpha(state.src)) {
           $('img-holes').checked = false;
           setStatus('Transparent PNG detected — transparency will be kept. Crop or treat, then place.');
+          drawPreview();
         } else {
           $('img-holes').checked = true;
-          setStatus(state.w + '×' + state.h + ' · Auto-remove background, then Place on canvas');
+          drawPreview();
+          runAutoBg();
         }
-        drawPreview();
       };
       im.src = e.target.result;
     };
@@ -265,11 +267,12 @@
       if (state.pickBg && state.work) {
         const px = clamp(Math.floor(x), 0, state.ww - 1);
         const py = clamp(Math.floor(y), 0, state.wh - 1);
-        const i = (py * state.ww + px) * 4;
-        state.customBg = { r: state.work[i], g: state.work[i + 1], b: state.work[i + 2] };
+        state.customBg = P.samplePixelMedian
+          ? P.samplePixelMedian(state.work, state.ww, state.wh, px, py, 2)
+          : { r: state.work[(py * state.ww + px) * 4], g: state.work[(py * state.ww + px) * 4 + 1], b: state.work[(py * state.ww + px) * 4 + 2] };
         state.pickBg = false;
         c.style.cursor = 'crosshair';
-        setStatus('Sampled background rgb(' + state.customBg.r + ',' + state.customBg.g + ',' + state.customBg.b + ')');
+        setStatus('Sampled paper rgb(' + state.customBg.r + ',' + state.customBg.g + ',' + state.customBg.b + ') · Auto again to key it');
         return;
       }
       if (!state.cropping) return;
@@ -298,7 +301,7 @@
   const prevSaveH = window.saveH;
   window.saveH = function saveH() {
     if (!FC || histBusy) return;
-    const j = JSON.stringify(FC.toJSON(['objType', 'isGuide', 'cutCommands', 'bgRemoved']));
+    const j = JSON.stringify(FC.toJSON(['objType', 'isGuide', 'cutCommands', 'bgRemoved', 'curveMode', 'curveAmount', 'curveSource', 'kitPlayer']));
     if (undoStack.length && undoStack[undoStack.length - 1] === j) return;
     undoStack.push(j);
     if (undoStack.length > 40) undoStack.shift();

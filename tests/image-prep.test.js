@@ -74,6 +74,40 @@ check('resize 10→20', rs.width === 20 && rs.height === 20);
 check('quality original does not downscale', P.qualitySize(800, 600, 'original').w === 800);
 check('quality web caps long edge', P.qualitySize(4000, 2000, 'web').w === 1200);
 
+// cream / off-white paper — typical phone photo of a crest
+const cream = make(28, 28, [248, 242, 230, 255]);
+for (let y = 8; y <= 19; y++) {
+  for (let x = 8; x <= 19; x++) setPx(cream, 28, x, y, 18, 42, 140, 255);
+}
+const creamOut = P.removeBackground(cream, 28, 28, { auto: true, punchHoles: false });
+check('cream paper corner is gone', getA(creamOut.data, 28, 0, 0) === 0);
+check('navy crest survives cream paper', getA(creamOut.data, 28, 14, 14) > 200);
+
+// light-grey mark on white — must not eat the subject
+const grey = make(24, 24, [255, 255, 255, 255]);
+for (let y = 7; y <= 16; y++) {
+  for (let x = 7; x <= 16; x++) setPx(grey, 24, x, y, 196, 196, 196, 255);
+}
+const greyOut = P.removeBackground(grey, 24, 24, { auto: true, punchHoles: false });
+check('white desk around grey mark is gone', getA(greyOut.data, 24, 0, 0) === 0);
+check('light grey mark is kept (not keyed as paper)', getA(greyOut.data, 24, 12, 12) > 180, 'a=' + getA(greyOut.data, 24, 12, 12));
+
+const sampled = P.sampleBorderBackground(img, W, H);
+check('uniform white border suggests a tight tolerance', sampled.suggestedTolerance >= 12 && sampled.suggestedTolerance <= 22, 'tol=' + sampled.suggestedTolerance);
+check('Lab white vs red is a large gap', P.colorDist(255, 255, 255, 200, 20, 20) > 40);
+const pick = P.samplePixelMedian(img, W, H, 0, 0, 2);
+check('3×3 pick on white is near white', pick.r > 250 && pick.b > 250);
+
+// 1px diagonal paper pocket (8-connect should reach it)
+const pocket = make(16, 16, [255, 255, 255, 255]);
+for (let y = 4; y <= 11; y++) {
+  for (let x = 4; x <= 11; x++) setPx(pocket, 16, x, y, 20, 20, 20, 255);
+}
+setPx(pocket, 16, 2, 2, 255, 255, 255, 255);
+const pocketOut = P.removeBackground(pocket, 16, 16, { tolerance: 20, punchHoles: false });
+check('diagonal paper near the border is keyed', getA(pocketOut.data, 16, 1, 1) === 0);
+check('black block next to pocket stays', getA(pocketOut.data, 16, 6, 6) > 200);
+
 const rings = P.silhouetteRings(trimmed.data, trimmed.width, trimmed.height, 20);
 check('silhouette has at least one ring', rings.length >= 1, 'rings=' + rings.length);
 const cmds = P.localCutCommands(trimmed.data, trimmed.width, trimmed.height, 0.6);

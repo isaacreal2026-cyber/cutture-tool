@@ -2,7 +2,9 @@
  * Logo / image prep — crop, quality, background removal, cut silhouette.
  * Pure pixel functions (no DOM). Browser + Node.
  *
- * Background removal is flood-from-border + optional hole punch.
+ * Auto BG is Lab flood-from-border + fringe grow + edge lock.
+ * Flat / white / cream shop logos go near-clean. Hair, glass, and
+ * same-colour subjects still need Pick BG — never claimed as 100%.
  * Already-transparent PNGs are preserved (not re-keyed).
  */
 (function (root, factory) {
@@ -27,11 +29,29 @@
     return clear > n * (minRatio == null ? 0.008 : minRatio);
   }
 
+  function srgbToLin(c) {
+    const x = c / 255;
+    return x <= 0.04045 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
+  }
+
+  function rgbToLab(r, g, b) {
+    const R = srgbToLin(r), G = srgbToLin(g), B = srgbToLin(b);
+    let x = (R * 0.4124564 + G * 0.3575761 + B * 0.1804375) / 0.95047;
+    let y = (R * 0.2126729 + G * 0.7151522 + B * 0.0721750);
+    let z = (R * 0.0193339 + G * 0.1191920 + B * 0.9503041) / 1.08883;
+    function f(t) { return t > 0.008856 ? Math.cbrt(t) : (7.787037 * t + 16 / 116); }
+    const fx = f(x), fy = f(y), fz = f(z);
+    return { L: 116 * fy - 16, a: 500 * (fx - fy), b: 200 * (fy - fz) };
+  }
+
   function colorDist(r1, g1, b1, r2, g2, b2) {
-    const dr = r1 - r2, dg = g1 - g2, db = b1 - b2;
-    const y = 0.299 * dr + 0.587 * dg + 0.114 * db;
-    const cr = dr - y, cg = dg - y, cb = db - y;
-    return Math.sqrt(y * y + 1.35 * (cr * cr + cg * cg + cb * cb));
+    const A = rgbToLab(r1, g1, b1), B = rgbToLab(r2, g2, b2);
+    const dL = A.L - B.L, da = A.a - B.a, db = A.b - B.b;
+    return Math.sqrt(dL * dL + da * da + db * db);
+  }
+
+  function sat(r, g, b) {
+    return Math.max(r, g, b) - Math.min(r, g, b);
   }
 
   function median(values) {
@@ -40,25 +60,96 @@
     return s[s.length >> 1];
   }
 
+  function clustersOf(samples, maxK) {
+    const kMax = maxK || 3;
+    const clusters = [];
+    samples.forEach(function (s) {
+      let best = -1, bestD = 14;
+      for (let i = 0; i < clusters.length; i++) {
+        const c = clusters[i];
+        const d = colorDist(s.r, s.g, s.b, c.r, c.g, c.b);
+        if (d < bestD) { bestD = d; best = i; }
+      }
+      if (best >= 0) {
+        const c = clusters[best];
+        const n = c.n + 1;
+        c.r = (c.r * c.n + s.r) / n;
+        c.g = (c.g * c.n + s.g) / n;
+        c.b = (c.b * c.n + s.b) / n;
+        c.n = n;
+      } else if (clusters.length < kMax) {
+        clusters.push({ r: s.r, g: s.g, b: s.b, n: 1 });
+      }
+    });
+    clusters.sort(function (a, b) { return b.n - a.n; });
+    return clusters.map(function (c) {
+      return { r: Math.round(c.r), g: Math.round(c.g), b: Math.round(c.b), n: c.n };
+    });
+  }
+
+  function minDistToBg(r, g, b, bg) {
+    let d = colorDist(r, g, b, bg.r, bg.g, bg.b);
+    const list = bg.clusters || [];
+    for (let i = 0; i < list.length; i++) {
+      const c = list[i];
+      const cd = colorDist(r, g, b, c.r, c.g, c.b);
+      if (cd < d) d = cd;
+    }
+    return d;
+  }
+
+  function isLikelySubject(r, g, b, bg, tolerance) {
+    const d = minDistToBg(r, g, b, bg);
+    if (d > tolerance * 1.05) return true;
+    const bgSat = sat(bg.r, bg.g, bg.b);
+    if (sat(r, g, b) > bgSat + 22 && d > 7) return true;
+    const lab = rgbToLab(r, g, b);
+    const bgL = rgbToLab(bg.r, bg.g, bg.b).L;
+    if (lab.L < bgL - 10 && d > 6) return true;
+    return false;
+  }
+
+  function suggestTolerance(bg) {
+    const v = Number(bg && bg.spread) || 0;
+    return clamp(Math.round(11 + v * 2.2), 12, 42);
+  }
+
   function sampleBorderBackground(data, w, h) {
-    const rs = [], gs = [], bs = [];
-    function take(x, y) {
+    const samples = [];
+    function take(x, y, weight) {
       if (x < 0 || y < 0 || x >= w || y >= h) return;
       const i = (y * w + x) * 4;
       if (data[i + 3] < 12) return;
-      rs.push(data[i]); gs.push(data[i + 1]); bs.push(data[i + 2]);
+      const s = { r: data[i], g: data[i + 1], b: data[i + 2] };
+      const n = weight || 1;
+      for (let k = 0; k < n; k++) samples.push(s);
     }
-    const band = Math.max(1, Math.min(6, Math.floor(Math.min(w, h) / 40)));
+    const band = Math.max(1, Math.min(8, Math.floor(Math.min(w, h) / 32)));
     for (let t = 0; t < band; t++) {
-      for (let x = 0; x < w; x++) { take(x, t); take(x, h - 1 - t); }
-      for (let y = 0; y < h; y++) { take(t, y); take(w - 1 - t, y); }
+      for (let x = 0; x < w; x++) { take(x, t, 1); take(x, h - 1 - t, 1); }
+      for (let y = 0; y < h; y++) { take(t, y, 1); take(w - 1 - t, y, 1); }
     }
-    return {
+    const corner = Math.max(2, Math.min(10, Math.floor(Math.min(w, h) / 12)));
+    for (let y = 0; y < corner; y++) {
+      for (let x = 0; x < corner; x++) {
+        take(x, y, 2); take(w - 1 - x, y, 2);
+        take(x, h - 1 - y, 2); take(w - 1 - x, h - 1 - y, 2);
+      }
+    }
+    const rs = samples.map(function (s) { return s.r; });
+    const gs = samples.map(function (s) { return s.g; });
+    const bs = samples.map(function (s) { return s.b; });
+    const bg = {
       r: median(rs),
       g: median(gs),
       b: median(bs),
-      samples: rs.length,
+      samples: samples.length,
+      clusters: clustersOf(samples, 3),
     };
+    const spreads = samples.map(function (s) { return minDistToBg(s.r, s.g, s.b, bg); });
+    bg.spread = median(spreads);
+    bg.suggestedTolerance = suggestTolerance(bg);
+    return bg;
   }
 
   function floodMask(data, w, h, bg, tolerance, fromBorderOnly) {
@@ -70,7 +161,13 @@
       const p = y * w + x;
       if (mark[p]) return;
       const i = p * 4;
-      if (data[i + 3] < 12 || colorDist(data[i], data[i + 1], data[i + 2], bg.r, bg.g, bg.b) <= tolerance) {
+      if (data[i + 3] < 12) {
+        mark[p] = 1;
+        q[qe++] = p;
+        return;
+      }
+      if (isLikelySubject(data[i], data[i + 1], data[i + 2], bg, tolerance)) return;
+      if (minDistToBg(data[i], data[i + 1], data[i + 2], bg) <= tolerance) {
         mark[p] = 1;
         q[qe++] = p;
       }
@@ -87,6 +184,53 @@
       const p = q[qs++];
       const x = p % w, y = (p - x) / w;
       enqueue(x + 1, y); enqueue(x - 1, y); enqueue(x, y + 1); enqueue(x, y - 1);
+      enqueue(x + 1, y + 1); enqueue(x - 1, y - 1); enqueue(x + 1, y - 1); enqueue(x - 1, y + 1);
+    }
+    return mark;
+  }
+
+  function growThroughFringe(data, w, h, mark, bg, tolerance) {
+    const extra = Math.max(3, tolerance * 0.18);
+    const bgL = rgbToLab(bg.r, bg.g, bg.b).L;
+    for (let pass = 0; pass < 4; pass++) {
+      const add = [];
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const p = y * w + x;
+          if (mark[p]) continue;
+          let near = false;
+          for (let dy = -1; dy <= 1 && !near; dy++) {
+            for (let dx = -1; dx <= 1; dx++) {
+              if (!dx && !dy) continue;
+              const nx = x + dx, ny = y + dy;
+              if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+              if (mark[ny * w + nx]) near = true;
+            }
+          }
+          if (!near) continue;
+          const i = p * 4;
+          if (data[i + 3] < 12) { add.push(p); continue; }
+          if (isLikelySubject(data[i], data[i + 1], data[i + 2], bg, tolerance)) continue;
+          const d = minDistToBg(data[i], data[i + 1], data[i + 2], bg);
+          const L = rgbToLab(data[i], data[i + 1], data[i + 2]).L;
+          if (d <= tolerance || (d <= tolerance + extra && L >= bgL - 6)) add.push(p);
+        }
+      }
+      if (!add.length) break;
+      for (let k = 0; k < add.length; k++) mark[add[k]] = 1;
+    }
+    return mark;
+  }
+
+  function protectHardEdges(data, w, h, mark, bg, tolerance) {
+    for (let y = 1; y < h - 1; y++) {
+      for (let x = 1; x < w - 1; x++) {
+        const p = y * w + x;
+        if (!mark[p]) continue;
+        const i = p * 4;
+        if (data[i + 3] < 12) continue;
+        if (isLikelySubject(data[i], data[i + 1], data[i + 2], bg, tolerance)) mark[p] = 0;
+      }
     }
     return mark;
   }
@@ -101,14 +245,13 @@
           data[i + 3] = 0;
           continue;
         }
-        // Soft fringe only next to removed background — never punch enclosed logo paint.
         const near =
           (x > 0 && mark[p - 1]) ||
           (x + 1 < w && mark[p + 1]) ||
           (y > 0 && mark[p - w]) ||
           (y + 1 < h && mark[p + w]);
         if (!near) continue;
-        const d = colorDist(data[i], data[i + 1], data[i + 2], bg.r, bg.g, bg.b);
+        const d = minDistToBg(data[i], data[i + 1], data[i + 2], bg);
         if (d < tolerance + soft) {
           const a = clamp(Math.round(((d - tolerance * 0.45) / soft) * 255), 0, data[i + 3]);
           data[i + 3] = a;
@@ -162,35 +305,52 @@
     }
   }
 
+  function resolveTolerance(opts, bg) {
+    const user = opts.tolerance == null ? 30 : Number(opts.tolerance);
+    if (!opts.auto) return user;
+    const suggested = (bg && bg.suggestedTolerance) || suggestTolerance(bg || {});
+    const scale = user / 30;
+    return clamp(Math.round(suggested * (Number.isFinite(scale) ? scale : 1)), 10, 56);
+  }
+
   function removeBackground(src, w, h, options) {
     const opts = options || {};
     const data = copyRgba(src);
     const preserved = !opts.force && hasExistingAlpha(data);
-    const bg = opts.bg || sampleBorderBackground(data, w, h);
-    const tolerance = opts.tolerance == null ? 30 : Number(opts.tolerance);
+    const sampled = sampleBorderBackground(data, w, h);
+    const bg = opts.bg
+      ? {
+        r: opts.bg.r, g: opts.bg.g, b: opts.bg.b,
+        clusters: opts.bg.clusters || [{ r: opts.bg.r, g: opts.bg.g, b: opts.bg.b, n: 1 }],
+        spread: opts.bg.spread != null ? opts.bg.spread : sampled.spread,
+        suggestedTolerance: opts.bg.suggestedTolerance || sampled.suggestedTolerance,
+        samples: opts.bg.samples || sampled.samples,
+      }
+      : sampled;
+    const tolerance = resolveTolerance(opts, bg);
 
     if (preserved) {
       if (opts.decontaminate !== false) decontaminate(data, w, h, bg);
       return {
         data: data, width: w, height: h, bg: bg, preserved: true,
-        remaining: countOpaque(data),
+        remaining: countOpaque(data), tolerance: tolerance,
       };
     }
 
-    const border = floodMask(data, w, h, bg, tolerance, true);
-    let mark = border;
+    let mark = floodMask(data, w, h, bg, tolerance, true);
+    growThroughFringe(data, w, h, mark, bg, tolerance);
     if (opts.punchHoles) {
       const holes = floodMask(data, w, h, bg, tolerance, false);
-      mark = new Uint8Array(w * h);
-      for (let i = 0; i < mark.length; i++) mark[i] = border[i] || holes[i] ? 1 : 0;
+      for (let i = 0; i < mark.length; i++) if (holes[i]) mark[i] = 1;
     }
+    protectHardEdges(data, w, h, mark, bg, tolerance);
     applyMask(data, w, h, mark, bg, tolerance);
     if (opts.decontaminate !== false) decontaminate(data, w, h, bg);
     if (opts.despeckle) despeckle(data, w, h, opts.despeckle === true ? 8 : opts.despeckle);
 
     return {
       data: data, width: w, height: h, bg: bg, preserved: false,
-      remaining: countOpaque(data),
+      remaining: countOpaque(data), tolerance: tolerance,
     };
   }
 
@@ -300,7 +460,6 @@
     return data;
   }
 
-  // Marching squares → closed rings in pixel space (top-left origin).
   function silhouetteRings(data, w, h, alphaMin) {
     const t = alphaMin == null ? 20 : alphaMin;
     const m = w + 1;
@@ -395,7 +554,7 @@
   }
 
   function localCutCommands(data, w, h, simplifyPx) {
-    const rings = silhouetteRings(data, w, h, 20);
+    const rings = silhouetteRings(data, w, h, 14);
     const ox = -w / 2, oy = -h / 2;
     const simplified = rings.map(function (ring) {
       if (typeof CutterEngine !== 'undefined' && CutterEngine.simplify) {
@@ -406,24 +565,42 @@
     return ringsToCommands(simplified, ox, oy);
   }
 
+  function samplePixelMedian(data, w, h, x, y, radius) {
+    const r = radius == null ? 1 : radius;
+    const rs = [], gs = [], bs = [];
+    for (let dy = -r; dy <= r; dy++) {
+      for (let dx = -r; dx <= r; dx++) {
+        const nx = x + dx, ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+        const i = (ny * w + nx) * 4;
+        if (data[i + 3] < 12) continue;
+        rs.push(data[i]); gs.push(data[i + 1]); bs.push(data[i + 2]);
+      }
+    }
+    return { r: median(rs), g: median(gs), b: median(bs) };
+  }
+
   function imageDataLike(data, w, h) {
     return { data: data, width: w, height: h };
   }
 
   return {
-    hasExistingAlpha,
-    sampleBorderBackground,
-    colorDist,
-    removeBackground,
-    trimTransparent,
-    crop,
-    resizeBilinear,
-    qualitySize,
-    featherAlpha,
-    countOpaque,
-    silhouetteRings,
-    localCutCommands,
-    imageDataLike,
-    copyRgba,
+    hasExistingAlpha: hasExistingAlpha,
+    sampleBorderBackground: sampleBorderBackground,
+    colorDist: colorDist,
+    suggestTolerance: suggestTolerance,
+    minDistToBg: minDistToBg,
+    removeBackground: removeBackground,
+    trimTransparent: trimTransparent,
+    crop: crop,
+    resizeBilinear: resizeBilinear,
+    qualitySize: qualitySize,
+    featherAlpha: featherAlpha,
+    countOpaque: countOpaque,
+    silhouetteRings: silhouetteRings,
+    localCutCommands: localCutCommands,
+    samplePixelMedian: samplePixelMedian,
+    imageDataLike: imageDataLike,
+    copyRgba: copyRgba,
   };
 });

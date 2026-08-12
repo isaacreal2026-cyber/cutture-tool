@@ -56,7 +56,7 @@
     return E.objectsToEntities(FC.getObjects().filter((o) => !o.isGuide), {
       pxPerMm: E.PX_PER_MM,
       heightPx: FC.height,
-      simplifyMm: opt && opt.checked ? 0.15 : 0,
+      simplifyMm: opt && opt.checked ? 0.08 : 0,
     });
   };
 
