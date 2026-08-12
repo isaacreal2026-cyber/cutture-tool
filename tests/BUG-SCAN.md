@@ -25,6 +25,10 @@ Updated 2026-08-12.
 | White paint inside a badge | Leave punch off |
 | White logo on white | Need Pick BG or a transparent PNG |
 
+11. **Map zoom** — wheel / + / − zoom the whole sheet (text, logo, grid) around the cursor like a map. Rulers lock to the same world centimetres. Zoom never changes plotter millimetres (10 cm on the sheet is still 100 mm in DXF/HPGL at 200% or 50%).
+12. Transform X/Y/W/H use the same mm/cm/in as the rulers.
+13. Ctrl+D / Ctrl+G shortcuts restored. Broken export-option markup cleaned.
+
 ## Still later
 
 - USB / serial send to a physical plotter (files: DXF / HPGL / Cut-SVG).

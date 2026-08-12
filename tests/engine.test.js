@@ -79,6 +79,12 @@ check('cut SVG strips fills', svg.includes('fill="none"') && svg.includes('strok
 const opt = E.traceOptions(128, 8);
 check('trace options are 2-color vinyl palette', opt.numberofcolors === 2 && opt.pal.length === 2);
 
+check('1cm world is 10mm on the plotter', Math.abs(E.plotterMmFromWorldPx(E.PX_PER_MM * 10) - 10) < 1e-9);
+check('zoom does not change plotter mm', Math.abs(E.plotterMmFromWorldPx(37.79527559055118) - 10) < 1e-6);
+check('worldFromScroll at pad is 0', E.worldFromScroll(40, 2, 40) === 0);
+check('scrollFromWorld inverse', Math.abs(E.scrollFromWorld(100, 2, 40) - 240) < 1e-9);
+check('screen cm grows with zoom only on screen', E.screenPerUnit(E.pxPerUnit('cm'), 2) === E.pxPerUnit('cm') * 2);
+
 if (process.exitCode) {
   console.log('\nengine tests FAILED');
   process.exit(1);

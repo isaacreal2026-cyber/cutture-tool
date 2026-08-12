@@ -656,8 +656,6 @@ select.pi{cursor:pointer}
         <span class="plbl">Options</span>
         <div style="display:flex;flex-direction:column;gap:5px">
           <label style="font-size:11px;display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="exp-opt" checked> Optimize node count</label>
-          <label style="font-size:11px;display:flex;="display:flex;flex-direction:column;gap:5px">
-          <label style="font-size:11px;display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="exp-opt" checked> Optimize node count</label>
           <label style="font-size:11px;display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="exp-outline" checked> Convert text to cut outlines</label>
           <label style="font-size:11px;display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="exp-scale"> Add scale markers</label>
           <label style="font-size:11px;display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="exp-wm" checked disabled> aisac watermark (required)</label>
@@ -1799,7 +1797,8 @@ function initKeys(){
       switch(e.key){
         case 'z':e.preventDefault();undo();break;
         case 'y':e.preventDefault();redo();break;
-        case 'd':e.preventDefault();duplicateentDefault();groupSelected();break;
+        case 'd':e.preventDefault();duplicateSelected();break;
+        case 'g':e.preventDefault();groupSelected();break;
         case 's':e.preventDefault(); if(e.shiftKey) saveProject(); else showExportModal(); break;
         case 'o':e.preventDefault(); openProject(); break;
         case 'n':e.preventDefault(); newDocument(); break;
@@ -1907,5 +1906,6 @@ switchTab('props');
 </script>
 <script src="js/cut-app.js"></script>
 <script src="js/image-editor.js"></script>
+<script src="js/map-zoom.js"></script>
 </body>
 </html>

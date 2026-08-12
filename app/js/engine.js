@@ -369,6 +369,22 @@
     return { app: 'CutterStudio Pro', version: 2, platforms: ['win32', 'linux'] };
   }
 
+  function worldFromScroll(scroll, zoom, pad) {
+    return (Number(scroll) - (pad == null ? 40 : pad)) / (zoom || 1);
+  }
+  function scrollFromWorld(world, zoom, pad) {
+    return Number(world) * (zoom || 1) + (pad == null ? 40 : pad);
+  }
+  function screenPerUnit(pxPerUnit, zoom) {
+    return Number(pxPerUnit) * (zoom || 1);
+  }
+  function plotterMmFromWorldPx(px) {
+    return Number(px) / PX_PER_MM;
+  }
+  function worldPxFromPlotterMm(mm) {
+    return Number(mm) * PX_PER_MM;
+  }
+
   return {
     PX_PER_IN,
     PX_PER_MM,
@@ -389,6 +405,11 @@
     objectsToEntities,
     traceOptions,
     stripFillsForCut,
+    plotterMmFromWorldPx,
+    worldPxFromPlotterMm,
+    worldFromScroll,
+    scrollFromWorld,
+    screenPerUnit,
     projectMeta,
   };
 });
